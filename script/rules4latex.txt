@@ -1,0 +1,196 @@
+Here are some general guidelines compiled for Masters thesis, STA380 or STA480 typed reports, based on personal and journal styles (especially from JMVA and Biometrika guidelines, `Handbook on Writing Laboratory Reports` from www.chem.uzh.ch).
+
+General:
+========
+
+At UZH, US orthography is required. 
+
+Further UZH specific details are given: 
+http://www.kommunikation.uzh.ch/dam/jcr:931b05d2-f5dc-425d-a1a0-35463e81af31/UZH_WritingGuide.pdf
+(of course, not all sections are required for your text).
+
+
+Titles:
+=======
+
+Titles and section headings should be concise and informative (titles are often used in information-retrieval systems). Avoid abbreviations and formulae where possible. 
+
+Use title capitalization in the title (as opposed to text capitalization). 
+
+Do not include one single sub-unit (one section within one chapter or one subsection within one section).
+
+Subsubsections are not used.
+
+
+
+Math formulas
+=============
+
+Present simple formulae in line with normal text where possible. Long or important mathematical (not verbal) expressions should be displayed (i.e., shown on a separate line). In principle, variables are to be presented in italics, typically achieved through the use of $.$. 
+
+
+Personally, I solely use  
+   \begin{align} 
+     y & = x + 2,   \label{eq:1} 
+   \end{align} 
+(as well as the starred version).  Other examples are 
+   \begin{align} 
+     y_1 & = x_1 + 2x_2 + 2,   \nonumber  \\ 
+     y_2 & = x_1 + 3,            \label{eq:2} 
+   \end{align} 
+This environment is very flexible and covers virtually all cases.
+
+
+Number consecutively any equations that have to be displayed separately from the text (but only if referred to explicitly in the text).
+
+
+References should be done through  `[...] and in equation~\eqref{eq:1} we see [...]` (note the lowercase 'equation' and the nonbreakable space '~'
+
+Care is needed with punctuation. Use punctuation, as the formula would be normal text. For example
+
+The ACF of an MA(1) is
+\begin{align}
+  \gamma_h= \begin{cases} (\theta^2+1)\sigma^2, & h=0,\\
+    \theta \sigma^2,& h=1,\\
+    0,& h\geq 2. \end{cases}
+\end{align}
+
+
+Citation in text
+================
+
+Please cite all relevant material which includes the range from ideas to quotes. Artwork (adapted or copied) has to be credited appropriately. 
+
+Please ensure that every reference cited in the text is also present in the reference list (and vice versa).  
+
+For simplicity, I suggest to use \citet{label}, \citep{label} or \citealp{label} (the latter is used in situation like here, see Furrer and Sain, 2009).
+
+Unpublished results and personal communications are not recommended in the reference list, but may be mentioned in the text. If these references are included in the reference list they should follow the standard reference style of the journal and should include a substitution of the publication date with either 'Unpublished results' or 'Personal communication'. Citation of a reference as 'in press' implies that the item has been accepted for publication.
+
+
+References
+==========
+
+References need to be coherent and complete, e.g., articles need at least author, year, title, journal name, volume and pages. 
+
+Check correctness of the reference items, including capitalization like 'Bayesian' not 'bayesian', etc.
+
+
+
+
+Figures and Tables
+==================
+
+Figures and Tables are inserted and based on '\begin{} \end{}', which is placed after a paragraph.
+
+Ensure that each illustration has a caption. A caption should comprise a brief title (not on the figure itself) and a description of the illustration. Keep text in the illustrations themselves to a minimum but explain all symbols and abbreviations used. The caption to a figure should contain descriptions of lines and symbols used and the text should give the interpretation of the figure.  
+
+
+Figure and Table captions always end with a full stop. Figure captions are below the figure, table captions above.  
+
+
+Check that all the axes are labelled correctly and include units of measurement.  Axis labels should have the format `Difference of loglikelihoods': only the initial letter of the first word is upper-case. The font sizes of the axes in the Figures and the text should be coherent.
+
+
+Use the `\label{tag}' (inside the figure and table environment) and refer to by using `[...] as shown in Figure~\ref{tag} [...]'  (uppercase Figure and Table, with a nonbreakable space). It is good practice to use creative label names or add chapter number in front, e.g. \label{mysunnyfigurehistogram}, \label{fig03:hist}.
+
+
+Use Figure~ and Table~; do not use Fig.~ or Tab.~.
+
+ 
+Put all figures in a separate directory, called `figure` and use \graphicspath{{./figure/}} in your tex document.
+
+
+Whenever possible use vector graphics or lossless pixel graphics (.pdf, .png). When setting \DeclareGraphicsExtensions{.pdf,.png} you can omit the extension.
+
+
+
+Accents
+=======
+
+Might be a good idea to use
+ 
+\usepackage[T1]{fontenc}       % provides fonts having  accented characters 
+\usepackage[latin1]{inputenc}  % allows the user to input accented characters directly from the keyboard
+
+in your preamble. See also
+http://tex.stackexchange.com/questions/44694/fontenc-vs-inputenc
+
+
+Some other helpful remarks
+==========================
+
+Hyphens - (\verb+-+ in \TeX), n-dashes -- (\verb+--+), m-dashes --- (\verb+---+), and minus signs $-$ (\verb+$-$+) have different uses.  Hyphens are used to join two words, or in the double-barrelled name of a single person (e.g.\ non-user, Barndorff-Nielsen); n-dashes are used in ranges of numbers or to join the names of two different people (1--7, Neyman--Pearson); and minus signs are used in mathematics (e.g. $-2$). m-dashes are used as parenthetical remarks, like this subordinate clause (these may also be placed between two commas).
+
+
+Symbols should not start sentences. Distinctive type (e.g. boldface) for matrices and vectors is encouraged. Vectors are assumed to be column vectors, unless explicitly transposed. The use of an apostrophe to denote matrix or vector transposition should be avoided; it is preferable to write $A^\top$, $a^\top$.   
+
+
+Ranges of integers are denoted $i=1,\dots, n$, whereas $0\leq x\leq 1$ is used for ranges of real numbers.  
+
+
+Paragraphs are created with a double newline (an empty line). Use '\\' only within tables, equations etc.
+
+
+
+Units are given in upright type, use preferably SI-units (use a capital L for liters). Separate several units by blanks to avoid ambiguities, possibly with \, or \;. Use either (consistently) the notation mm N$^{-1}$ or the notation mm/N but avoid expressions with more than one solidus (/), e.g. kg/m/s2. "Per cent" (%) or ppm are also considered to be units (although these are multiplication factors in a mathematical sense). 
+Numerical values and units are always separated by a blank with the exception of 'per cent' and 'degree'.
+
+
+Here are some classical errors and tips:
+
+-   \overline{z}_t   not \overline{z_t} 
+
+-   use punctuation for display style equation as if it would be part of the text
+
+-   $\var(x)$ not var $x$ or Var($x$); similarly for \E, \cov, \corr 
+
+-   $r$th not $r$-th or $r^{\rm th}$
+
+-   $n^{1/2}$ not $n^{\frac12}$   
+
+-   $\dots$ not ...  
+
+-   Zeros precede decimal points: $0.2$ not $.2$ or $0,2$.
+
+-   $\sum^{n}_{i=1}$ not $\sum^n_1$
+
+-   $p$-values   not   P-values or p-values
+
+-   Quotes `a'  or ``b''  and not 'a' and ''b''  
+
+-   Powers of e are often more conveniently denoted by \exp
+
+-   $a/bc$  should be written $a/(bc)$ or $a(bc)^{-1}$
+
+-   avoid $\underline{.}$, use $\emph{.}$.   
+
+-   $a*b$ should be $a\times b$, or $a\cdot b$, or simply $a b$
+
+-  Subscripts for sequences are required: 
+   "\Sigma(X-\bar{X})^2" -> "\sum_{i=1}^n(X_i-\bar{X})^2"
+
+-  In a math environment SE and SD and such like should be typesetted with \text{SE} and \text{SD} for proper letter spacing.
+
+
+Code
+====
+
+Often it is not necessary to include all R code that you have written. Selections thereof in, e.g., the appendix, may be helpful. Follow the style guide [https://google.github.io/styleguide/Rguide.xml].
+
+
+
+Final comments
+==============
+
+Carefully check you final document. Several iterations are necessary. One for content (consistency, coherence, ...), one for English (grammar general, tense, ...), links (only referenced equations with numbers, all links resolved, ...) one for layout (overfull boxes, appropriate line and page breaks, error free compilation, ...). 
+
+
+There are many very helpful online resources, for example http://www.chicagomanualofstyle.org/ http://onlinelibrary.wiley.com/doi/10.1002/bes2.1258/full 
+
+Writing good scientific documents is a skill; writing excellent scientific documents is a skill and art. 
+
+
+================================================================================
+Reinhard Furrer, September 2017
+================================================================================

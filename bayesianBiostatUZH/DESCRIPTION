@@ -1,0 +1,17 @@
+Package: bayesianBiostatUZH
+Type: Package
+Title: Bayesian approaches to clinical trials
+Version: 0.1.0
+Authors@R: c(person("Uriah", "Daugaard", role = "aut"), person("Lucas Heinrich", "Kook", role = "aut"),
+    person("Xijin", "Chen", role = "aut"), person("Seraphina", "Kissling", role = "aut"),
+    person("Mei Yee", "Ng", role = "aut"), person("Manja Elisabeth", "Deforth", role = "aut"),
+    person("Mark James", "Thompson", role = "aut"), person("Chiara", "Vanette", role = "aut"),
+    person("Natalia", "Popova", role = "aut"), person("Katrin", "Petermann", role = "aut"),
+    person("Charlotte", "Micheloud", role = "aut"), person("Manuela", "Ott", role = "aut"),
+    person("Leonhard", "Held", role = c("aut", "cre"), email = "leonhard.held@uzh.ch"))
+Description: This package implements functions and equations from Spiegelhalter's 2004 book
+    'Bayesian Approaches to Clinical Trials and Health-Care evaluation.
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1

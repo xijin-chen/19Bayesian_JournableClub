@@ -1,0 +1,329 @@
+
+% LaTeX file for Application Chapter 01
+<<'preamble01',include=FALSE>>=
+library(knitr)
+opts_chunk$set(
+    fig.path='figure/ch01_fig', 
+    self.contained=FALSE,
+    cache=TRUE
+) 
+@
+
+\appChapter{An Overview of the Bayesian Approach I}{Chiara}{Vanetta}
+% Simply start typing below....
+
+In this chapter we shall introduce the first core issues of Bayesian reasoning: these include subjectivity and context, the use of Bayes theorem, Bayes factors, Bayesian analysis with binary data and with normal distributions, and interval estimation. \\
+After the overview carried out in the first three chapters, the issues will be further developed in subsequent chapters.
+ 
+\section{Subjectivity and context}
+
+The standard interpretation of probability describes long-run properties of repeated random events. This is known as the \emph{frequency} interpretation of probability, and standard statistical methods are sometimes referred to as `frequentist'. In contrast, the Bayesian approach rests on an essentially `subjective' interpretation of probability, which is allowed to express generic uncertainty whether or not it is one of a number of repeatable experiments. For example, it is quite reasonable from a subjective perspective to think of a probability of the event `Earth will be openly visited by aliens in the next ten years', whereas it may be difficult to interpret this potential event as part of a `long-run' series.
+
+The subjective view of probability is not new, and in past epochs has been the standard ideology. \cite{fienberg1992brief} points out that Jakob Bernoulli in 1713 introduced `the subjective notion that the probability is personal and varies with an individual's knowledge', and that Laplace and Gauss both worked with posterior distributions two hundred years ago, which became known as `the inverse method'. However, from the mid-nineteenth century the frequency approach started to dominate, and controversy has sporadically continued.
+
+The vital point of the subjective interpretation is that Your probability for an event is a property of Your relationship to that event, and not an objective property of the event itself. This is why, pedantically speaking, one should always refer to probabilities \emph{for} events rather than probabilities \emph{of} events, and a conditioning context \emph{H} includes the observer and all their background knowledge and assumptions.
+
+Bayesian methods explicitly allow for the possibility that the conclusions of an analysis may depend on who is conducting it and their available evidence and opinion, and therefore the context of the study is vital. An analysis which might be carried out solely for the investigators, for example, may not be appropriate for presentation to reviewers (e.g. regulatory bodies) or consumers. If the aim is to convince a wide range of opinion, subjective inputs must be strongly argued and be subject to sensitivity analysis.
+
+\section{Bayes theorem for two hypotheses}
+
+In the present section we begin to illustrate the use of Bayes theorem as a mechanism for learning about unknown quantities from data, a process which is sometimes known as `prior to posterior' analysis. We start with the simplest possible situation. 
+
+Consider two hypotheses $H_0$ and $H_1$ which are `mutually exhaustive and exclusive', i.e. one and only one is true. Let the prior probability for each of the two hypotheses, before we have access to the evidence of interest, be $p(H_0)$ and $p(H_1)$; for the moment we will not concern ourselves with the source of those probabilities. Suppose we have observed some data $y$, such as the results of a test, and we know from past experience that the probability of observing $y$ under each of the two hypotheses is $p(y \given H_0)$ and $p(y \given H_1)$, respectively: these are the likelihoods, with the vertical bar representing `conditioning'.
+
+Bayes theorem shows how to revise our prior probabilities in the light of the evidence in order to produce posterior probabilities. Specifically, we have the identity
+\begin{align}
+  p(H_0 \given y)=\frac{p(y \given H_0)}{p(y)}\times p(H_0),
+\end{align}
+
+where $p(y)=p(y \given H_0)p(H_0)+p(y \given H_1)p(H_1)$ is the overall probability of $y$ occurring.
+In terms of odds rather than probabilities, Bayes theorem can then be re-expressed as
+\begin{align}
+  \frac{p(H_0 \given y)}{p(H_1 \given y)}=\frac{p(y \given H_0)}{p(y \given H_1)}\times\frac{p(H_0)}{p(H_1)}. \label{eq3.2}
+\end{align}
+
+Now $p(H_0)/p(H_1)$ are the \emph{prior odds}, $p(H_0 \given y)/p(H_1 \given y)$ are the \emph{posterior odds}, and $p(y \given H_0)=p(y \given H_1)$ is the \emph{likelihood ratio}, and so \eqref{eq3.2} can be expressed as \emph{posterior odds} $=$ \emph{likelihood ratio} $\times$ \emph{prior odds}.
+
+By taking logarithms we also note that \emph{log posterior odds} $=$ \emph{log likelihood ratio} $+$ \emph{log prior odds)},
+where the \emph{log likelihood ratio} has also been termed the `weight of evidence': this term was invented by Alan Turing when using these techniques for breaking the Enigma codes at Bletchley Park during the Second World War.
+
+This formulation is commonly used in the evaluation of diagnostic tests, where our intuition is often poor when processing probabilistic evidence and we tend to forget the importance of the prior probability.
+
+\section{Comparing simple hypotheses: likelihood ratios and Bayes factors}
+
+In the previous section we showed how data $y$ influence the relative probabilities of two hypotheses $H_0$ and $H_1$ through the likelihood ratio $p(y \given H_0)/p(y \given H_1)$, and hence the likelihoods contain all the relevant evidence that can be extracted from the data: this is the likelihood principle. This measure of the relative likelihood of two hypotheses is also known as the `Bayes factor' (BF) when some unknown parameter is present. The Bayes factor can vary between 0 and $\infty$, with small values being considered as both evidence \emph{against} $H_0$ and evidence \emph{for} $H_1$.  The scale in Table \ref{table3.2} was provided by the Bayesian physicist Harold Jeffreys, and dates from 1939 (\cite{jeffreys}).
+\begin{table}
+		\centering
+    \caption {Calibration of Bayes factor provided by Jeffreys.} 
+    \label{table3.2}
+    \begin{tabular}{cp{9cm}p{4cm}p{4cm}} 
+    \hline
+    Bayes factor range & Strength of evidence in favour of $H_0$ and against $H_1$\\ \hline
+    greater than 100 & Decisive\\ 
+    32 to 100 & Very strong\\ 
+    10 to 32 & Strong\\ 
+    3.2 to 10 & Substantial\\ 
+    1 to 3.2 & Not worth more than a bare mention\\
+     & \\
+    \hline
+     &Strength of evidence in against $H_0$ and in favour of $H_1$ \\ \hline
+    1 to 1/3.2 & Not worth more than a bare mention\\ 
+    $1/3.2$ to $1/10$ & Substantial\\ 
+    $1/10$ to $1/32$ & Strong\\ 
+    $1/32$ to $1/100$ & Very strong\\ 
+    less than $1/100$ & Decisive\\ 
+    \end{tabular}
+\end{table}
+
+The crucial idea is that the Bayes factor transforms prior to posterior odds: this uses expression \eqref{eq3.2}. In fact, Bayesian methods are best seen as a transformation from initial to final opinion, rather than providing a single `correct' inference.
+
+The use of Bayes theorem in diagnostic testing is an established part of formal clinical reasoning. More controversial is the use of Bayes theorem in general statistical analyses, where a parameter is an unknown quantity such as the mean benefit of a treatment on a specified patient population, and its prior distribution $p(\theta)$ needs to be specified. This major step might be considered as a natural extension of the subjective interpretation of probability, but the following section provides a further argument for why a prior distribution on a parameter may be a reasonable assumption.
+
+\section{Exchangeability and parametric modelling}
+
+We can derive the idea of independent and identically distributed (i.i.d.) variables and prior distributions of parameters from the more basic subjective judgement known as `exchangeability'. We judge that the variables $Y_1, \dots,Y_n$ are exchangeable if the probability that we assign to any set of potential outcomes, $p(y_1, \dots, y_n)$, is unaffected by permutations of the labels attached to the variables. 
+For example, suppose $Y_1, Y_2, Y_3$ are the first three tosses of a (possibly biased) coin, where $Y_1=1$ indicates a head, and $Y_1=0$ indicates a tail. Then we would judge $p(Y_1=1, Y_2=0, Y_3=1)=p(Y_2=1, Y_1=0, Y_3=1)=p(Y_1=1,Y_3=0, Y_2=1)$, i.e. the probability of getting two heads and a tail is unaffected by the particular toss on which the tail comes. This is a natural judgement to make if we have no reason to think that one toss is systematically any different from another.
+
+An Italian actuary, Bruno de Finetti, published in 1930 a most extraordinary result (\cite{de1961bayesian}). He showed that if a set of binary variables $Y_1, \dots,Y_n$ were judged exchangeable, then it implied that
+\begin{align}
+  p(y_1, \dots, y_n)=\int\prod_{i=1}^{n}p(y_i \given \theta)p(\theta)d\theta. \label{eq3.3}
+\end{align}
+
+Now \eqref{eq3.3} is unremarkable if we argue from right to left. However, de Finetti's remarkable achievement was to argue from left to right: exchangeable random quantities can be thought of as being i.i.d. variables drawn from some common distribution depending on an unknown parameter $\theta$, which itself has a prior distribution $p(\theta)$. Thus, from a subjective judgement about observable quantities, one derives the whole apparatus of i.i.d. variables, conditional independence, parameters and prior distributions. This was an amazing achievement: exchangeable observations justify the use of parametric models and prior distributions, while exchangeable parameters lead to the use of hierarchical models.
+
+\section{Bayes theorem for general quantities}
+
+Suppose $\theta$ is some quantity that is currently unknown, for example the true success rate of a new therapy, and let $p(\theta)$ denote the prior distribution of $\theta$. Suppose we have some observed evidence $y$, for example the results of a clinical trial, whose probability of occurrence is assumed to depend on $\theta$. As we have seen, this dependence is formalised by $p(y \given \theta)$, the (conditional) probability of $y$ for each possible value of $\theta$, and when considered as a function of $\theta$ is known as the likelihood. We would like to obtain the new, posterior, probability for different values of $\theta$, taking account of the evidence $y$.
+
+Bayes theorem applied to a general quantity $\theta$ says that
+\begin{align}
+  p(\theta \given y)=\frac{p(y \given \theta)}{p(y)}\times p(\theta).
+\end{align}
+
+Now $p(y)$ is just a normalising factor to ensure that $\int p(\theta \given y)d\theta=1$, and its value is not of interest (unless we are comparing alternative models). The essence of Bayes theorem only concerns the terms involving $\theta$, and hence is often written
+\begin{align}
+  p(\theta \given y) \propto p(y \given \theta)\times p(\theta), \label{eq3.5}
+\end{align}
+
+which says that the posterior distribution is proportional to (i.e. has the same shape as) the product of the likelihood and the prior. The deceptively simple expression \eqref{eq3.5} is the basis for the whole of the rest of the book, since it shows how to make inferences from a Bayesian perspective, both in terms of estimation and obtaining credible intervals and also making direct probability statements about the quantities in which we are interested.
+
+
+\section{Bayesian analysis with binary data}
+
+In the traditional analysis one considers a probability $\theta$ of an event occurring, and derive the form of the likelihood for $\theta$ having observed $n$ cases in which $r$ events occurred. Adopting a Bayesian approach to making inferences, we wish to combine this likelihood with initial evidence or opinion regarding $\theta$, as expressed in a prior distribution $p(\theta)$.
+
+\subsection{Binary data with a discrete prior distribution}
+
+First, suppose only a limited set of hypotheses concerning the true proportion $\theta$ are being entertained, corresponding to a finite list denoted $\theta_1, \dots,\theta_J$. Suppose in addition a prior probability 
+$p(\theta_j)$ of each has been assessed, where $\sum_{j}p(\theta_j)=1$. For a single Bernoulli trial with outcome 0 or 1, the likelihood for each possible value for $\theta$ is given by
+\begin{align}
+  p(y \given \theta_j)=\theta_j^y(1-\theta_j)^{1-y},
+\end{align}
+
+i.e. $p(y \given \theta_j)=\theta_j$ if $y=1$, and $p(y \given \theta_j)=1-\theta_j$ if $y=0$.
+
+Having observed an outcome $y$, Bayes theorem \eqref{eq3.5} states that the posterior probabilities for the $\theta_j$ obey
+\begin{align}
+  p(\theta_j \given y) \propto \theta_j^y(1-\theta_j)^{1-y} \times p(\theta_j),
+\end{align}
+
+where the normalising factor that ensures that the posterior probabilities add to 1 is
+\begin{align}
+  p(y) = \sum_j \theta_j^y(1-\theta_j)^{1-y} \times p(\theta_j).
+\end{align}
+
+After further observations have been made, say with the result that there have been $r$ `successes' out of $n$ trials, the relevant posterior will obey
+\begin{align}
+  p(\theta_j \given r) \propto \theta_j^r(1-\theta_j)^{n-r} \times p(\theta_j).
+\end{align}
+
+\subsection{Conjugate analysis for binary data}
+
+It is generally more realistic to consider $\theta$ a continuous parameter, and hence it needs to be given a continuous prior distribution. One possibility is that we think all possible values of $\theta$ are equally likely, in which case we could summarise this by a uniform distribution so that $p(\theta)=1$ for $0\le\theta\le1$.
+
+Applying Bayes theorem \eqref{eq3.5} yields
+\begin{align}
+  p(\theta \given y) \propto \theta^r(1-\theta)^{n-r} \times 1, \label{eq3.9}
+\end{align}
+
+where $r$ is the number of events observed and $n$ is the total number of individuals.
+
+We may recognise that the functional form of the posterior distribution in \eqref{eq3.9} is proportional to that of a beta distribution. The posterior distribution is in fact $\mbox{Be}[r+1,n-r+1]$. This immediately means that we can now summarise the posterior distribution in terms of its mean and variance, and make probability statements based on what we know about the beta distribution.
+
+Instead of a uniform prior distribution for $\theta$ we could take a $\mbox{Be}[a,b]$ prior distribution and obtain the following analysis:
+\begin{align*}
+ \mbox{Prior}&\propto \theta^{a-1}(1-\theta)^{b-1} \\
+ \mbox{Likelihood}&\propto \theta^{r}(1-\theta)^{n-r} \\
+ \mbox{Posterior}&\propto \theta^{a-1}(1-\theta)^{b-1}\theta^{r}(1-\theta)^{n-r} \\
+ &\propto \theta^{a+r-1}(1-\theta)^{b+n-r-1} \\
+ &=\mbox{Be}[a+r, b+n-r]
+\end{align*}
+
+Thus we have specified a beta prior distribution for a parameter, observed data from a Bernoulli or binomial sampling distribution, worked through Bayes theorem, and ended up with a beta posterior distribution. This is a case of \emph{conjugate analysis}. Conjugate models occur when the posterior distribution is of the same \emph{family} as the prior distribution.
+
+Example \ref{ex3.3} gives an example of the calculations with binary data and a continuous prior. 
+
+\begin{example} \label{ex3.3}
+Suppose a drug has an unknown true response rate $\theta$, and that previous experience with similar compounds has suggested that response rate between 0.2 and 0.6 could be feasible, with an expectation around 0.4. We can traslate this into a prior $\mbox{Be}[a,b]$ distribution as follows. 
+
+We first want to estimate the mean $m$ and standard deviation $s$ of the prior distribution. For normal distributions we know that $m\pm 2s$ includes just over $95\%$ of the probability, so if we were assuming a normal prior we might estimate $m=0.4$, $s=0.1$. However, we know that beta distributions with reasonably high $a$ and $b$ have an approximately normal shape, so these estimates might also be used for a beta prior. 
+
+Next, we know that for a beta distribution
+\begin{align}
+ m&=a/(a+b) \label{eq3.11} \\ 
+ s^2&=m(1-m)/(a+b+1). \label{eq3.12}
+\end{align}
+
+Using the estimates $m=0.4$, $s=0.1$ and the following code, we obtain $a=9.2$, $b=13.8$. 
+
+<<echo=TRUE>>=
+m <- 0.4
+s <- 0.1
+par <- beta_parameters(m, s)
+a <- par[1]
+b <- par[2]
+a
+b
+@
+
+A $\mbox{Be}[9.2,13.8]$ distribution is shown in Figure \ref{fig3.2}(a), showing that it well represents the prior assumptions.
+
+If we now observed $r=15$ successes out of 20 trials, we know that the parameters of the beta distribution are updated to $[a+15, b+20-5]=[24.2,18.8]$. The likelihood and posterior are shown in Figures \ref{fig3.2}(b) and \ref{fig3.2}(c): the posterior will have mean $24.2/(24.2+18.8)=0.56$.
+
+<<echo=TRUE>>=
+r <- 15
+n <- 20
+pos <- posterior_conj_betabin(a,b,r,n)
+newa <- pos[1]
+newb <- pos[2]
+@
+
+\begin{figure}
+\centering
+<<fig=TRUE, echo=FALSE, eps=TRUE>>=
+par(mfrow=c(3,1))
+
+curve(dbeta(x,a,b), ylim=c(0,5), yaxt="n", ylab=" ", bty="n", xlab=" ", main="(a) Prior")
+
+likelihood <- function(p) {
+    return(p^r*(1-p)^(n-r))
+}
+theta <- seq(0,1,0.01)
+plot(theta, sapply(theta, FUN=likelihood), type="l", yaxt="n", ylab=" ", bty="n", xlab=" ", main="(b) Likelihood")
+
+curve(dbeta(x,newa,newb), yaxt="n", ylab=" ", , bty="n", xlab=" ", main="(c) Posterior")
+@
+\caption{(a) is a $\mbox{Be}[9.2,13.8]$ prior distribution supporting response rates between 0.2 and 0.6, (b) is a likelihood arising from a binomial observation of 15 successes out of 20 cases, and (c) is the resulting $\mbox{Be}[24.2,18.8]$ posterior from a conjugate beta-binomial analysis.}
+\label{fig3.2}
+\end{figure}
+
+\end{example}
+
+\section{Bayesian analysis with normal distributions}
+
+In many circumstances it is appropriate to consider a likelihood as having a normal shape, although this may involve working on somewhat uninituitive scales such as the logarithm of the hazard ratio. With a normal likelihood it is mathematically convenient, and often reasonably realistic, to make the assumption that the prior distribution of $\theta$
+% $p(\theta)$ 
+has the form
+\begin{align}
+  \theta \sim \Nor\biggl[ \mu,\frac{\sigma^2}{n_0}\biggr],
+ % p(\theta)=\mbox{N}\biggl[\theta \given \mu,\frac{\sigma^2}{n_0}\biggr],
+\end{align}
+
+where $\mu$ is the prior mean. We note that the same standard deviation $\sigma$ is used in the likelihood and the prior, but the prior is based on an `implicit' sample size $n_0$. We note in passing that as $n_0$ tends to $0$, the variance becomes larger and the distribution becomes `flatter'. A normal prior with a very large variance is sometimes used to represent a non-informative distribution.
+
+Suppose we assume such a normal prior $\theta \sim \Nor[\mu,\sigma^2/n_0]$ and likelihood $y_m \sim \Nor[\theta,\sigma^2/m]$. Then the posterior distribution obeys
+\begin{align*}
+ p(\theta \given y_m)&\propto p(y_m \given \theta)p(\theta) \\
+ &\propto \exp \biggl[ -\frac{(y_m-\theta)^2m}{2\sigma^2}\biggr] \times \exp \biggl[ -\frac{(\theta-\mu)^2n_0}{2\sigma^2} \biggr],
+\end{align*}
+
+ignoring irrelevant terms that do not include $\theta$. By matching terms in $\theta$ it can be shown that
+\begin{align*}
+ (y_m-\theta)^2m+(\theta-\theta_0)^2n_0=\biggl(\theta-\frac{n_0\theta_0+my_m}{n_0+m}\biggr)^2(n_0+m)+(y_m-\mu)^2\biggl(\frac{1}{m}+\frac{1}{n_0}\biggr),
+\end{align*}
+
+and we can recognise that the term involving $\theta$ is exactly that arising from a posterior distribution
+\begin{align}
+\theta \given y_m \sim \Nor \biggl[  \frac{n_0\mu+my_m}{n_0+m},\frac{\sigma^2}{n_0+m}\biggr]. \label{eq3.14}
+  % p(\theta \given y_m)=\mbox{N} \biggl[\theta \given  \frac{n_0\mu+my_m}{n_0+m},\frac{\sigma^2}{n_0+m}\biggr]. \label{eq3.14}
+\end{align}
+
+Equation \eqref{eq3.14} is very important. It says that our posterior mean is a weighted average of the prior mean $\mu$ and parameter estimate $y_m$, weighted by their precision, and therefore is always a compromise between the two. 
+
+Our posterior variance (1/precision) is based on an implicit sample size equivalent to the sum of the prior `sample size' $n_0$ and the sample size of the data $m$: thus, when combining sources of evidence from the prior and the likelihood, we add precisions and hence always decrease our uncertainty. 
+Note that as $n_0 \to 0$, the prior tends towards a uniform distribution and the posterior tends to the same shape as the likelihood.
+
+Example \ref{ex3.4} will provide a simple example of Bayesian reasoning using normal distributions.
+
+\begin{example} \label{ex3.4}
+Suppose we are interested in the long-term systolic blood pressure (SBP) in mmHg of a particular 60-year-old female. We take two independent readings 6 weeks apart, and their mean is 130. We know that SBP is measured with a standard deviation $\sigma=5$. What should we estimate her SBP to be?
+
+Let her long-term SBP be denoted $\theta$. A standard analysis would use the sample mean $y_m=130$ as an estimate, with standard error $\sigma/\sqrt{m}=5/\sqrt{2}=3.5$: a $95\%$ confidence interval is $y_m\pm 1.96 \times \sigma/\sqrt{m}$, i.e. 123.1 to 136.9.
+
+However, we may have considerable additional information about SBPs which we can express as a prior distribution. Suppose that a survey in the same population revealed that females aged 60 had a mean long-term SBP of 120 with standard deviation 10. This population distribution can be considered as a prior distribution for the specific individual, and is shown in Figure \ref{fig3.3}(a): if we express the prior standard deviation as $\sigma/\sqrt{n_0}$ (i.e. variance $\sigma^2/n_0$), we can solve to find $n_0=(\sigma/10)^2=0.25$.
+
+<<echo=TRUE>>=
+sigma <- 5
+
+mu <- 120
+sd <- 10
+
+m <- 2
+ym <- 130
+se <- sigma/sqrt(m)
+
+pos <- posterior_normal(mu, sd, ym, se)
+newmu <- pos[1]
+newsd <- pos[2]
+
+newmu
+newsd
+@
+
+Figure \ref{fig3.3}(b) shows the likelihood arising from the two observations on the woman. From \eqref{eq3.14} the posterior distribution of $\theta$ is normal with mean $(0.25\times 120+2\times 130)/(0.25+2)=128.9$ and standard deviation $\sigma/\sqrt{n_0+m}=5/\sqrt{2.25}=3.3$, giving a $95\%$ interval of $128.9 \pm 1.96 \times 3.3=(122.4, 135.4)$. Figure \ref{fig3.3}(c) displays this posterior distribution, revealing some `shrinkage' towards the population mean, and a small increase in precision from not using the data alone.
+
+Intuitively, we can say that the woman has somewhat higher measurements than we would expect for someone her age, and hence we slightly adjust our estimate to allow for the possibility that her two measures happened by chance to be on the high side. As additional measures are made, this possibility becomes less plausible and the prior knowledge will be systematically downgraded.
+
+\begin{figure}
+\centering
+<<fig=TRUE, echo=FALSE, eps=TRUE>>=
+par(mfrow=c(3,1))
+
+curve(dnorm(x, mu , sd), xlim=c(100, 140), ylim=c(0,0.1), yaxt="n", ylab=" ", 
+      bty="n", xlab=" ", main="(a) Prior")
+
+curve(dnorm(x, ym , se), xlim=c(100, 140), yaxt="n", ylab=" ", bty="n", 
+      xlab=" ", main="(b) Likelihood")
+
+curve(dnorm(x, newmu, newsd), xlim=c(100, 140), yaxt="n", ylab=" ", , bty="n", xlab=" ", 
+      main="(c) Posterior")
+@
+\caption{Estimating the true long-term underlying systolic blood pressure of a 60-year-old woman: (a) the prior distribution is $\Nor[120, 10^2]$ and expresses the distribution of true SBPs in the population; (b) the likelihood is proportional to $\Nor[130, 3.5^2]$ and expresses the support for different values arising from the two measurements made on the woman; (c) the posterior distribution is $\Nor[128.9, 3.3^2]$ and is proportional to the likelihood multiplied by the prior.}
+\label{fig3.3}
+\end{figure}
+
+\end{example}
+
+\section{Point estimation, interval estimation and interval hypotheses}
+
+Although it is most informative to plot an entire posterior distribution, there will generally be a need to produce summary statistics: we shall consider point estimates, intervals, and the probabilities of specified hypotheses.
+
+\emph{Point estimates.} Traditional measures of location of distributions include the mean, median and mode, and - by imposing a particular penalty on error in estimation (Berger, 1985) - each can be given a theoretical justification as a point estimate derived from a posterior distribution. If the posterior distribution is symmetric and unimodal, then the mean, median and mode all coincide in a single value and there is no difficulty in making a choice. We shall find, however, that in some circumstances posterior distributions are considerably skewed and there are marked differences between, say, mean and median. We shall prefer to quote the median in such contexts as it is less sensitive to the tails of the distribution, although it is perhaps preferable to report all three summary measures when they show wide disparity.
+
+\emph{Interval estimates.} Any interval containing, say, 95\% probability may be termed a `credible' interval to distinguish it from a Neyman-Pearson `confidence interval', although we shall generally refer to them simply as posterior intervals. Three types of intervals can be distinguished - we assume a continuous parameter $\theta$ with range $(-\infty, \infty)$ and a posterior conditional on generic data $y$:
+\begin{itemize}
+    \item \emph{One sided intervals.} For example, a one-sided upper 95\% interval would be $(\theta_L, 
+        \infty)$, where $\Pr(\theta < \theta_L \given y)=0.05$.
+    \item \emph{Two-sided `equi-tail-area' intervals.} A two-sided 95\% interval with equal probability in each tail area would comprise $(\theta_L, \theta_U)$ where $\Pr(\theta < \theta_L \given y)=0.025$, and $\Pr(\theta > \theta_U \given y)=0.975$.
+    \item \emph{Highest posterior density (HPD) intervals.} If the posterior distribution is skewed, then a two-sided interval with equal tail areas will generally contain some parameter values that have lower posterior probability than values outside the interval. An HPD interval does not have this property - it is adjusted so that the probability ordinates at each end of the interval are identical, and hence it is also the narrowest possible interval containing the required probability. Of course if the posterior distribution has more than one mode, then the HPD may be made up of a set of disjoint intervals.
+\end{itemize}
+
+Traditional confidence intervals and Bayesian credible intervals differ in a number of ways.
+
+\begin{enumerate}
+    \item Most important is their interpretation: we say there is a 95\% probability that the true $\theta$ lies in a 95\% credible interval, whereas this is certainly not the interpretation of a 95\% confidence interval. In a long series of 95\% confidence intervals, 95\% of them should contain the true parameter value - unlike the Bayesian interpretation, we cannot give a probability for whether a particular    confidence interval contains the true value, it either does or does not and all we have to fall back on is the long-run properties of the procedure. 
+    \item Credible intervals will generally be narrower due to the additional information provided by the prior: for an analysis assuming the normal distribution they will have width $2\times 1.96 \times \sigma/\sqrt{n_0+m}$, compared to $2\times 1.96 \times \sigma/\sqrt{m}$ for the confidence interval.
+    \item Some care is required in terminology: while the width of classical confidence intervals is governed by the \emph{standard error} of the estimator, the width of Bayesian credible intervals is dictated by the posterior \emph{standard deviation}.
+\end{enumerate}
+
+\emph{Interval hypotheses.} Suppose a hypothesis of interest comprises an interval $H_0:\theta_L<\theta<\theta_U$, for some prespecified $\theta_L, \theta_U$ indicating, for example, a range of clinical equivalence. Then it is straightforward to report the posterior probability $\Pr(H_0 \given y)=\Pr(\theta_L<\theta<\theta_U \given y)$, which may be obtained using standard formulae or simulation methods.

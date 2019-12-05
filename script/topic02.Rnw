@@ -1,0 +1,319 @@
+% LaTeX file for Application Chapter 02
+<<'preamble02',include=FALSE>>=
+library(knitr)
+opts_chunk$set(
+    fig.path='figure/ch02_fig', 
+    self.contained=FALSE,
+    cache=TRUE
+) 
+@
+
+\appChapter{The Bayesian Approach II}{Mark James}{Thompson}
+% This chapter essentially follows my presentation and incorporates some of the minor corrections.
+
+
+\todo{Chapter inacceptable in present form}
+\todo{Use full sentences, use R chunks, improve and align notation}
+\section{Priors}
+The notion of prior is essential to the Bayesian approach to statistics and inference. It formalizes a way of incorporating pior knowledge and beliefs into a study. Thus a {\it prior} (probability distribution) expresses beliefs about both the location and distribution of a quantity. As a simple biological example, if we were to guess the sex of an unborn foetus, our prior belief would be that it is either male or female, and that the generative distribution is bionomial (or Dirichlet if we allow for intersex babies).
+
+%\begin{itemize}
+% \item Not necessarily ``prior'': can be set after seeing the data
+% \item Not necessarily unique: opinions differ
+%\item Not necessarily specified
+%\item With increasing data, of decreasing importance
+%\end{itemize}
+
+Bayesian priors are not necessarily prior in the temporal sense they can be set after seeing the data. Moreover, there is no such thing as a "correct" prior since opinions differ with regard to the outcome; in certain designs a prior is not even specified. What is important to realize 
+
+
+
+
+\begin{itemize}
+\item Flat / diffuse : no information, typically uniform.
+\item Informative : has some mean or variance to inform the posterior.
+\item Rigid : does't fit the true process, but is consistent with it.
+\item Pathological : cannot fit the data
+\item Null : none, let's the data do the talking
+\item Improper : doesn't necessarily integrate to 1, but used for computation
+\item Conjugate : distribution from which parameters are drawn.
+\end{itemize}
+
+
+\subsection{Using Bayesian Null to Interpret}
+The likelihood is:
+\begin{equation}
+H0_{Bayes}=\frac{\alpha}{1 - \beta}
+\end{equation}  
+We then have the prior odds:
+\begin{equation}
+ \frac{p(H_0)}{p(H_1)}
+\end{equation}
+We can then use Bayesian logic to compute the predictive value positive:
+\begin{equation}
+predictive\_value\_positive =  \frac{p(H_0)}{p(H_1)} \cdot \frac{\alpha}{1 - \beta}
+\end{equation}
+Example 3.7 Implemented in code.
+
+
+
+\subsection{Use to Interpret Clinical Trials}
+(Interlude)
+
+
+\section{Sequential Bayes}
+\subsection{Laplace's Law of Succession}
+Today's probability becomes tomorrow's prior.
+
+
+
+What's the probability that I shall be alive tomorrow?\\
+Confer with your neighbors.
+
+
+
+\paragraph{(Approximate) Answer:}
+<<echo=TRUE>>=
+birth <- as.Date("1980-06-11")
+@
+
+<<echo=TRUE>>=
+today <- as.Date("2019-03-13")
+@
+<<echo=TRUE>>=
+days <- as.numeric(today - birth)
+@
+
+\begin{equation}
+\frac{days + 1}{days + 2}\approx 0.99992 
+\end{equation}
+Why?
+
+
+
+Assuming a uniform, (non-informative), prior, we get:
+\begin{eqnarray}
+Pr\{\text{I'm alive today}\} | \{\text{I was alive yesterday.}\}\\
+= {\displaystyle {\frac {\int _{0}^{1}p^\text{days]+1}dp}{\int _{0}^{1}p^\text{days}dp}}={\frac {k+1}{k+2}}},\\ \text{where p is probability}  \nonumber
+\end{eqnarray}
+
+It becomes easy to see the empirical likelihood of my continued existence eventually smothers any prior with enough data...\\
+Other answers?
+
+
+\paragraph{Sequential Bayes}
+By same logic:
+\begin{equation}
+p(\theta | y_m) \propto p(y_m | \theta )p(\theta)
+\end{equation}
+Then for the n+1 case, we assume:
+\begin{equation}
+p(\theta | y_n, y_m) \propto p(y_n | \theta,y_m)p(\theta|y_m)
+\end{equation}
+Substitute the first posterior, yielding the new posterior:
+\begin{equation}
+p(\theta | y_n,y_m) \propto p(y_n | \theta,y_m)p(y_m|\theta)p(\theta)
+\end{equation}
+
+
+
+\section{Prediction}
+
+This leads us naturally to think about the probability of observable values rather than unobservable parameters...
+
+
+
+\subsection{Bayesian Prediction}
+\begin{equation}
+p(x | y) = \int p(x|\theta) \cdot p(\theta | y) d\theta
+\end{equation}
+This is simply averaging the likelihood of x over all the posterior beliefs about \(\theta\), given y.
+This assumes that x is only dependent on \(\theta\):
+\begin{equation}
+p(x|\theta) 
+\end{equation}
+
+
+\subsection{Prediction under Normality}
+Average the mean and variance estimates using Law of total expectation (Adam's law) and Law of total variance (Eve's law):
+\begin{eqnarray}
+\displaystyle \operatorname {E} (X) &=&\operatorname {E} (\operatorname {E} (X\mid Y)) \\
+ \operatorname{Var} (Y)& =&\operatorname {E} [\operatorname {Var} (Y\mid X)]+\operatorname{Var} (\operatorname {E} [Y\mid X]) \nonumber \\
+Y_n | y_m  & \sim & \mathcal{N}(\frac{n_0 \cdot \mu + m \cdot y_m}{n_0 + m}, \sigma^2(1/(n_0+m) + 1/n) ) \nonumber
+\end{eqnarray}
+
+
+\paragraph{Odds Ratio: Quantity of Interest}
+We're interested in the relative odds of dying under treatment and control.
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{l|cc}
+ &Treatment & Control\\
+\hline
+Death &a &b\\
+No death &c &d
+\end{tabular}
+\end{center}
+\label{tab:oddsRatio}
+\end{table}%
+
+\begin{eqnarray}
+\text{Odds Ratio} = OR  = (a/c)/(b/d) 
+\end{eqnarray}
+
+
+
+\paragraph{Odds Ratio: Normal Approximation}
+We can estimate the odds ratio, and its variance.
+\begin{eqnarray}
+log(OR) &\sim& N(\theta,\sigma) \\
+\hat{\theta} &=& ln( \frac{(a+\frac{1}{2})(d+\frac{1}{2})}{(b+\frac{1}{2})(c+\frac{1}{2})}) \\
+V(\theta) &=& \sigma^2 \\
+\sigma &=&\sqrt{\frac{1}{a+ \frac{1}{2}} +  \frac{1}{b+ \frac{1}{2}}+ \frac{1}{c+ \frac{1}{2}} + \frac{1}{d+ \frac{1}{2}}} 
+\end{eqnarray}
+
+\paragraph{Example : GREAT Trial : Preliminaries}
+\begin{itemize}
+\item Treatment: thrombolytic therapy (anistreplase a "clot buster" drug) after heart-attack
+\item Design: 2 arm RCT of treatment vs. conventional treatment (placebo)
+\item Outcome: Relative odds of 30-day mortality under treatment vs. control
+\item Prior: based on opinion of cardiologists appraisal of other trials, 15-40 percent improvement with extreme values of no effect and 40\% reduction,  \(\mu = -.26, CI = -0.51,0.00, sd=0.13\)
+\end{itemize}
+
+
+
+
+\paragraph{Example : GREAT Trial : Results}
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{l|cc}
+          &Treatment  &Control \\
+\hline          
+Death     &13 &23 \\
+Survival  &150 &125 
+\end{tabular}
+\end{center}
+\label{tab:great}
+\end{table}%
+
+
+
+\paragraph{Example : GREAT Trial and OR Prediction}
+How can we predict the observed OR in future myocardial infarction patients, with and without using the pre-trial prior information?
+
+
+\paragraph{Example : GREAT Trial and OR : Calculation}
+\begin{eqnarray}
+OR = (13/150)/(35/125) \\
+log(OR) = \hat{\theta} \approx \frac{(a+1/2)(d+1/2)}{(b+1/2)(c+1/2)} \\
+m = -0.74, sd= 0.58
+\end{eqnarray}
+
+
+
+\paragraph{OR Prediction w/ and w/o Prior}
+With pre-trial prior:
+\begin{equation}
+Y_n | y_m \sim \mathcal{N}(\frac{n_0 \cdot \mu + m \cdot y_m}{n_0 + m}, \sigma^2(1/(n_0+m) + 1/n) )
+\end{equation}
+
+Without pre-trial prior: 
+\begin{equation}
+Y_n | y_m \sim \mathcal{N}(y_m, \sigma^2(1/m  + 1/n) )
+\end{equation}
+=> More variance without using prior...
+
+
+
+\begin{figure}[H]
+\begin{center}
+ \includegraphics[scale=0.23]{../figures/predictive.png}
+\label{fig:predictive}
+\end{center}
+\end{figure}
+We can also figure out the probability of observing an outcome of interest. 
+\begin{eqnarray}
+p(Yn<log(0.5)|Ym) = \Phi((-0.69 + 0.31)/.46) = 0.21 \\
+= \Phi((-0.69 + .74 )/.58) = 0.53
+\end{eqnarray}
+
+\paragraph{Hazard Ratios for MACE Events for GLPs}
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{lcc}
+Study &Hazard Ratio &se \\
+\hline
+ELIXA (2015-02)     & 1.02 & 0.17  \\
+LEADER (2015-12)    & 0.87 & 0.10  \\
+SUSTAIN 6 (2016-03) & 0.74 & 0.21  \\
+EXSCEL (2017-05)    & 0.91 & 0.09 \\
+Hernandez et. al. (2018-10)   & 0.78 & 0.12 
+%Marso et. al. (2016-) & 0.87 & 0.1\\
+%Normal kidneys  & 0.94 & 0.13\\
+%Impaired kidneys  & 0.67 & 0.16\\
+%Severely impaired kidneys  & 0.67 & 1.\\
+%Bain et. al. (2018-09) & 0.87 & 0.1\\
+%Bain et. al. (2018-09) & 0.87 & 0.1\\
+\end{tabular}
+\end{center}
+\label{tab:diabetes}
+\end{table}%
+
+
+
+\begin{figure}[H]
+\begin{center}
+ \includegraphics[scale=0.23]{../figures/null_updated.png}
+\label{fig:pred}
+\end{center}
+\end{figure}
+
+
+\section{Decisions}
+\paragraph{Rational Decision-Making}
+We use Bayesian reasoning implicitly all the time time (not always well).\\
+This is why Bayesian reasoning is great for investing (i.e. gambling) and decisions.
+
+
+\paragraph{Utility}
+Imagine a fair coin: \\
+Heads thou winst thy wager + bonus. \\
+Tails thou losest thy wager.\\
+
+How much of a bonus wouldst thou need to take the bet?
+
+Confer with thy neighbors.
+
+
+
+'Tis said that human life is priceless: this is false.
+
+
+\paragraph{Pricing Healthy Babies}
+\begin{itemize}
+\item Folic acid reduces neural tube defects (NTD).
+\item Probability of NTD ~3/1000 (p).
+\item Probability of NTD ~1/1000 with folic acid ($p_{folic}$).
+\item Price of folic acid for 12-week course = CHF 50.
+\end{itemize}
+\begin{enumerate}
+\item What is the value of a healthy baby to a mother that takes a supplement?
+\item What is the value of a healthy baby to a mother that does {\it not} take a supplement?
+\end{enumerate}
+Confer with thy neighbors.
+
+
+\paragraph{Answer:}
+\begin{eqnarray}
+U_1 &=& V(baby)*(1-p_{folic}) - V(baby_{NTD})*p_{folic} - 50 \\
+&\geq& \nonumber \\
+U_0 &=&V(baby)*(1-p) - V(baby_{NTD})*p - 0  \nonumber
+\end{eqnarray}
+Where V() is the monetary value operator of the baby/scenario.\\
+Decision rule is thus:
+\begin{equation}
+U_0-U_1 \geq \frac{c_0 - c_1}{p_0 - p_1} =  \frac{0-50}{0.003-0.001}
+\end{equation}
+\begin{equation}
+ \implies CHF 25'000 \nonumber
+\end{equation}

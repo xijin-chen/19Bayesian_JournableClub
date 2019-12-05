@@ -1,0 +1,474 @@
+% LaTeX file for Application Chapter 05
+<<'preamble05',include=FALSE>>=
+library(knitr)
+opts_chunk$set(
+    fig.path='figure/ch05_fig', 
+    self.contained=FALSE,
+    cache=TRUE
+) 
+library(bayesianBiostatUZH)
+@
+
+\appChapter{Prior Distributions}{Natalia}{Popova}
+% Simply start typing below....
+%% \newcommand{\given}{\,\vert\,} % für "X gegeben Y" also $X\given Y$ schreiben
+
+\section{Introduction}
+
+Correctly chosen mathematical prior distribution could bring tremendous benefits to the study. However, it is always difficult to judge what is a correct prior. There are five main approaches to define a prior:
+
+ 
+\begin{itemize}
+\item Elicitation of subjective opinion 
+\item Summarizing past evidence
+\item Default priors
+\item "Robust" priors
+\item Estimation of priors using hierarchical models
+\end{itemize}
+
+The basic idea behind Bayesian analysis is to transform prior knowledge to posterior, rather than producing specific posterior distribution.
+
+\section{Elicitation of subjective opinion}
+
+The term 'clinical prior' is used for expert assessments in this chapter.
+It is well known that people suffer from a number of biases when they try to assess probability of an event.
+These five biases were summarized by \cite{kadane1998experiences}:
+\begin{enumerate}
+\item \textit {Availability.} Easily recalled events are given higher probability and vice versa.
+\item \textit {Adjustment and anchoring.} Initial assessments tend to exert an inertia, so that further elicited quantities tend to be insufficiently adjusted. For example, if a ‘best guess’ is elicited first, then subsequent judgements about an interval may be too close to the first assessment. 
+\item \textit {Overconfidence.}  Distributions are too tight. 
+\item \textit {Conjunction fallacy.} A higher probability can be given to an event which is a subset of an event with a lower probability.
+\item \textit {Hindsight bias.} If the prior is assessed after seeing the data, the expert may be biased.
+\end{enumerate}
+
+There are four methods how experts opinions can be elicited:
+
+\begin{enumerate}
+\item Informal discussions.
+\item Structured interviewing and formal pooling of opinion.
+\item Structured questionnaires.
+\item Computer based elicitation.
+\end{enumerate}
+
+When we have a few different experts opinions, we can summarize them in next ways:
+
+\begin{itemize}
+\item \textit {Elicit a consensus.} If the aim is to produce a single assessment expressing the belief of the group as a whole, then a range of techniques exist for bringing diverse opinions into consensus, including both informal and more formal Delphi-like methods. The choice of a method for pooling multiple opinions is clearly defined and should be developed depending on the situation.
+
+\item \textit {Calculate a "pooled" prior.} The choice of the method of pooling can vary and depends on the experiment.
+
+\item \textit {Retain individual priors.}  The diversity of opinion is just as important as the ‘pooled’ opinion. Using this diversity we can estimate whether current evidence is enough to convince all experts a and hence to form  a "final" opinion.
+\end{itemize}
+
+\begin{example}\label{ex5.1}
+
+
+References: \cite{parmar1994chart} and \cite{spiegelhalter1994bayesian}. 
+\begin{itemize}
+\item \textit {Intervention}: a new radiotherapy technique known as continuous hyperfractionated accelerated radio therapy (CHART). 
+\item \textit {Aim of studies}: to assess whether CHART provides a clinically important difference in survival that compensates for any additional toxicity and problems of delivering the treatment.
+\item \textit {Outcome measure}: the hazard ratio, defined as the ratio of the hazard under CHART to the hazard under standard treatment
+\item \textit {Planned sample size}: 600 patients were to be entered, with 470 expected deaths, with 90\% power to detect at the 5\% level a 10\% improvement (15\% to 25\% survival). This can be seen to be equivalent to an alternative hypothesis of $h_A = \log(0.25)/\log(0.15) = 0.73$.
+\item \textit {Statistical model}: proportional hazards model, providing an approximate normal likelihood for the log(hazard ratio)
+\[
+y_m \sim \Nor \left[\theta, \frac{\sigma^2}{m}\right]
+\]
+where $y_m$ is the estimated log(hazard ratio), $\sigma$ = 2 and $m$ is the equivalent number of events in a trial balanced in recruitment and follow-up.
+\item \textit {Prior distribution}: eleven opinions were elicited for the lung cancer. The results are shown in the table \ref{table5.1}.
+\end{itemize}
+
+\end{example}
+
+\begin{table}
+\addvspace{-5mm}
+\centering
+\caption {Opinions of 11 clinicians interested in participating in the CHART lung cancer trial regarding (i) the likely advantage of CHART over conventional radiotherapy and (ii) the range of equivalence for each clinician. Each row in the body of the table gives the range of equivalence together with percentage probability of each advantage deficit, for each clinician. Note, the percentage probabilities in each row sum to 100.} 
+\label{table5.1}
+\includegraphics[scale = 0.45]{Picture1}
+\end{table}
+
+The prior distribution expressed a median anticipated 2-year survival benefit of 10\%, and a 10\% chance that CHART would offer no survival benefit at all. The histogram was then transformed to a log (hazard ratio) scale assuming a 15\% baseline survival: for example, the "bin" of the histogram with range 5\% to 10\% was transformed to one with upper limit $\log[\log(0.20)/\log(0.15)]$ = \Sexpr{round(surv_diff_to_logHR(5,15),2)} and lower limit $\log[\log(0.25)/\log(0.15)]$ = \Sexpr{round(surv_diff_to_logHR(10,15),2)}. These results can be derived using the package \texttt{bayesianBiostatUZH} with the function \texttt{surv\_diff\_to\_logHR}. Initial and transformed distributions of experts opinions are shown in Figure \ref{fig5.1}.
+
+\begin{figure}[H]
+\centering
+<<example 5.1, include = TRUE, fig.height=4, fig.width=6>>=
+## --------Code for the example 5.1---------------------------------------
+## Here we introduce the data from the example already as a frequency 
+## distribution (histogram)
+## We use bin mean value as "introduced" in the example and experts opinion 
+##(points out of 100) as frequency
+pooled <- c(rep(-7.5, 3), rep(-2.5, 7), rep(2.5, 20), 
+            rep(7.5, 21), rep(12.5, 25), rep(17.5, 18), 
+            rep(22.5, 5), 27.5)
+par(mfrow = c (1,2))
+## baseline survival
+bls <- 15 
+## First, we plot experts histogram of experts opinions "as is"
+hist(pooled, col = "grey", main = "A)", las = 2, 
+     xlab = "Pchart - Pstandard (in %)")
+## Further, we need to "rearrange" the hist of their opinions to logOR scale
+## We use a function surv_diff_to_logHR from the package bayesianBiostatUZH
+RePooled <- surv_diff_to_logHR(pooled, bls)
+## these are "limits" of bins 
+cat_levels <- seq(-10, 30, 5) 
+ReLevels <- surv_diff_to_logHR(cat_levels, bls)
+m1 <- mean(RePooled) # mean on a new scale 
+sd1 <- sd(RePooled) # sd on a new scale 
+## of the "introduced" histogram from above 
+hist(RePooled, col = "grey", main = "B)", las = 2, 
+     xlab = "LogHR", prob = TRUE, breaks = ReLevels)
+#then we plot fitted normal distribution which can behave as "prior" further
+points(seq(-1, 0.4, 0.01),dnorm(seq(-1, 0.4, 0.01), mean=m1, sd=sd1), 
+       col="darkblue", lwd=2, type="l")
+@
+\caption{A) Pooled experts' opinions and  B) Transformed experts' opinions}
+\label{fig5.1}
+\end{figure}
+
+
+\section{Summarizing past evidence}
+ 
+The benefits of using historical data are obvious, however we should always think if we really can apply this knowledge in our study.
+
+Previous historical studies may be used as the basis for a prior distribution. Suppose, for example, we have historical data $y_1, y_2,...y_H$ each assumed to have a normal likelihood
+\begin{center}
+$y_h \sim \Nor \left[\theta_h, \sigma_h^2\right]$,
+\end{center}
+where each of these estimates could itself be based on a pooled set of studies. Numerous options are available for specifying the relationship between parameter of interest $\theta$ and historical data.
+\begin{itemize}
+\item  \textit {Irrelevance}. $\theta_h$ has no relevance to $\theta$ 
+\item  \textit {Exchangeable.} We might be willing to assume that $\theta_h, h = 1,...,H$ and $\theta$ from are exchangeable. This leads to direct use of meta-analysis of many previous studies.
+\item  \textit {Potential biases.} We could assume that $\theta_h, h = 1,...,H$ are functions of $\theta$.
+\item  \textit {Equal but discounted.} Previous studies may not be directly related to the one in question, and we may wish to discount their influence. $\theta_h$ (=) $\theta$.
+\item  \textit {Functional dependence.} It is possible that the parameter of interest may be logically expressed as a function of parameters from historical studies.  
+\item  \textit {Equal.} This assumes that the past studies have all been measuring identical parameters $\theta_h$ = $\theta$
+\end{itemize}
+
+
+\section{Default priors}
+\subsection {Non 'informative' or 'reference' priors}
+
+In some situations, the best option, due to lack of a strong belief, is to create a flat prior over the range of interest.
+
+Formally, a uniform distribution leads to the situation where the posterior distribution has the same shape as the likelihood function. Consequently, resulting bayesian intervals and estimates will essentially match the traditional results. 
+
+\subsection {'Sceptical' priors and 'enthusiastic' priors}
+\label{sec:5.5.2}
+
+A sceptical prior about a treatment effect should have a mean of zero (no treatment effect) and a shape chosen to include plausible treatment differences and a predefined small probability $\gamma$ = 5\% that the treatment effect is as large as the alternative hypothesis $\theta_A$. In Figure \ref{fig5.2}
+'Enthusiastic' prior is centered on the alternative hypothesis and with a low chance 
+(say, 5\%) that the true treatment benefit is negative.
+
+\begin{figure}[H]
+\centering
+<<Prior and scecptical prior, include = TRUE, out.width='4in'>>=
+## -----Code for the visualization of theoretical idea 
+## ------behind sceprical and enthusiastic prior-----
+set.seed(1)
+x  <-  seq(-4, 4, length=2000)
+plot(dnorm(x)~x, type = "l", lwd = 2, col = "blue", xlim  = c (-4,6), 
+     ylab = "", yaxt='n', xlab = expression(theta))
+a <- x+2
+lines(dnorm(x)~a, lwd = 2, col = "brown")
+polygon(c( x[x>=2], 2 ),  c(dnorm(x)[x>=2],0 ), col="grey")
+polygon(c( a[a<=0], 0 ),  c(dnorm(x)[a<=0],0 ), col="grey")
+legend("topright", legend = c("sceptical", "enthusiastic"), 
+       col = c ("blue", "brown"), lwd = 2, bty = "n")
+text(2.8, 0.04, expression(gamma[1]))
+text( -0.7, 0.04, expression(gamma[2]))
+text( 2, 0.24, expression(theta[A]))
+abline(v = 2, lwd = 1, col = "brown")
+abline(v = 0, lwd = 1, col = "blue")
+@
+\caption{Sceptical and enthusiastic prior}
+\label{fig5.2}
+\end{figure}
+
+Assuming a prior distribution $\theta \sim \Nor [0,\sigma^2/n_0]$ such that $\Pr(\theta>\theta_A)$ = $\gamma$ is a small value $\gamma$ implies
+
+\begin{center}
+$\gamma = 1 - \Phi\left(\theta_A\frac{\sqrt{n_0}}{\sigma}\right)$ and
+\end{center}
+
+\begin{align}
+-\sigma\frac{z_\gamma}{\sqrt{n_0}} = \theta_A \label{eq:5.1}
+\end{align}
+and leads to $n_0 = \left(\frac{z_\gamma \sigma}{\theta_A}\right)^2$  where $\Phi(z_\gamma) = \gamma$.
+
+If we know type I error $\alpha$ and power $1-\beta$, then 
+
+\begin{align}
+n = \sigma^2 \frac{(z_{\alpha/2} + z_\beta)^2}{\theta_A^2} \label{eq:5.2}
+\end{align}
+
+Considering equations \eqref{eq:5.1} and \eqref{eq:5.2} together we have
+\begin{align}
+ \frac{n_0}{n} = \left[\frac{\z_\gamma}{\z_{\alpha/2} + \z_\beta}\right]^2 .
+\end{align}
+
+
+<<handicap, echo = TRUE>>=
+## -------- calculation of n0/n for a sceptical prior-----------------------
+alpha = 0.05 ## Type I error
+beta = 0.1   ## 90% power
+gamma = 0.05 ## probability that a treatment effect is as large
+             ## as althernative hypothesis
+## we can use the function from the package
+(n0_n <- handicap(alpha=alpha, beta=beta, gamma=gamma))
+@
+
+It is very often that $\alpha = 0.05$ and $\beta = 0.1$ and $\gamma = 0.05$, which gives $n_0/n$ = \Sexpr{round(handicap(0.05, 0.1, 0.05),2)}.
+Thus, a sceptical prior in a trial designed with 5\% size and 90\% power corresponds to adding a "handicap" equivalent to already having run a "pseudotrial" with no observed treatment difference, and which contains around 26\% of the proposed sample size.
+
+\begin{example}\label{ex5.3}
+
+It is a continuation of an example \ref{ex5.1}. The sceptical prior is shown in Figure \ref{fig5.3}. The sceptical prior has a mean = 0 and the shape is such that the prior probability that the true benefit exceeds the alternative hypothesis is low (5\%). Taking into account that variance of the prior is $\sigma^2/n_0$ and the equation \ref{eq:5.1}, we can calculate the prior variance as $\theta^2/z_{\gamma}
+^2$, which was integrated in the function \texttt{var\_scept\_prior} in the package \texttt{bayesianBiostatUZH}. Assuming $\sigma$=2, we can further caluculate $n_0$ = \Sexpr{round(4/ var_scept_prior(-0.31, qnorm(1-0.05)))}.
+
+
+\begin{figure}[H]
+\centering
+<<example 5.3, include=TRUE, out.width='3in', message=FALSE, warning=FALSE>>=
+## --------Code for the example 5.3---------------------------------------
+## It is a continuation of the example 5.1
+##  We compare clinical prior (obtained in the example 5.1) with a sceptical prior
+## First, we plot  clinical "prior" from example 5.1
+plot(exp(seq(-1, 0.4, 0.01)),dnorm(seq(-1, 0.4, 0.01), mean=m1, sd=sd1), 
+     col="red", lwd=2, type="l", log = "x", ylim = c(0,2.3), 
+     ylab = " ", yaxt = "n", xlab = "HR")
+abline(v = 0.73, lwd = 1, col = "red")
+abline(v = 1, lwd = 1, col = "blue")
+## now we add sceptical prior 
+bl <- 15 ## baseline as explained in the example 5.1
+impr <- 10 ## 10% improvement (desired improvement which should be detected under 5% level, 
+## value under alternative)
+theta_alter <- surv_diff_to_logHR(impr,bl)
+##  in this example Theta_alternative = log(log(0.25)/log(0.15)) = log(0.73) = -0.31
+##  1.65 means prior will show 5% chance of being less that value of parameter 
+## under alternative hypothesis and can be calculated using qnorm(1-0.05)
+x <- seq(-1,2, by = 0.01)
+points(exp(x), dnorm(x=x, mean=0, 
+                     sd=sqrt(var_scept_prior(theta_alter, qnorm(1-0.05)))),
+       col="blue", lwd = 2, type = "l", log = "x")
+legend("topright", legend = c("clinical prior", "sceptical prior"), 
+       col = c ("red", "blue"), lwd = 2, bty = "n")
+@
+\caption{Example of a sceptical prior}
+\label{fig5.3}
+\end{figure}
+
+\end{example}
+
+
+\subsection {Priors with a point mass at the null hupothesis ("lump and smear" priors)}
+
+It is very common to assign one value for a null hypothesis and a range of values for a alternative hypothesis.
+A prior distribution that preserves this distinction would place a 'lump' of probability on the null hypothesis, and 'smear' the remaining probability over the whole range of alternatives; 
+
+A specific assumption used in the example is the following:
+
+$H_0: \theta = \theta_0$ with probability $p$  ("lump")
+
+$H_A: \theta \sim  \Nor \left[ \theta_0, \frac{\sigma^2}{n_{0}}\right]$ with probability $1-p$  ("smear")
+
+This approach leads to the 'relative betting odds' or Bayes factor as a sequential monitoring tool, defined as the ratio of the likelihood of the data under the null hypothesis to the average likelihood (with respect to the prior) under the alternative:
+\[
+  \mbox{BF} = \frac{p(y_m\vert H_0)}{p(y_m\vert H_A)} = \sqrt{1+\frac{m}{n_0}}\exp\left[\frac{-z_m^2}{2(1+n_0/m)}\right], \, z_m = \frac{y_m\sqrt m}{\sigma}, \, \theta_0 = 0
+\]
+
+
+The relative betting odds are independent of the 'lump' of prior probability placed on the null (while depending on the shape of the 'smear' over the alternatives). \cite{cornfield1969} suggests a 'default' prior under the alternative as a normal distribution centered on the null hypothesis and with expectation (conditional on the effect being positive) equal to the alternative hypothesis $\theta_A$. Then 
+
+\begin{align}
+E(\theta \given \theta > 0) = \sqrt{\frac{2\sigma^2}{\pi n_0}} = \theta_A \label{eq:5.4}
+\end{align}
+
+\begin{example} \label{ex5.4}
+
+
+<<>>=
+## -------- data from the experiment ------
+m1 <- 70 ##  patients treated with heparine
+m2 <- 72 ##  patients treated with urokinase
+m <- 71 ## sample size in one group
+mean5.4 <- 3.61  ##  difference in mean response (value is taken from the book example)
+sd5.4 <- 1.11 ##  standard error (value is taken from the book example)
+sigma5.4 <- sd5.4*sqrt(m) 
+theta.alter5.4 <- 8 ## (value is taken from the book example)
+@
+
+
+\begin{itemize}
+\item \textit{References} \cite{sasahara1973urokinase}
+
+\item \textit{Aim of a study}: To compare thrombolytic capability in urokinase (new) with heparin (standard) 
+\item \textit{Statistical model}. Normal likelihoods assumed for an estimate $y_m$ of treatment effect $\theta$ based on $m$ pairs of randomized patients. 
+\item \textit{Prospective analysis}. Prior elicitations were conducted before the start of the trials, and the Bayesian results presented to the advisory committee at each of their meetings
+\item \textit{Prior distribution}: A "lump and smear" was assessed for each outcome. To select $n_0$ \cite{cornfield1969} suggests setting the expectation, given there is a positive effect, to the alternative hypothesis, so from the equation \ref{eq:5.4} the prior standard deviation $\sigma/\sqrt{n_0}$ is $\sqrt{\pi/2}\theta_A$ and hence $n_0 = 2\sigma^2/(\pi\theta_A^2)$. Alternative hypothesis were assessed by members of the advisory committee "based on what appeared reasonable from previous experience". 
+For the outcome "Absolute improvement in resolution on lung scan", we take $\sigma$  = \Sexpr{round(sd5.4*sqrt(m),2)} as observed in the study. The alternative hypothesis was selected to be $\theta$ = \Sexpr{theta.alter5.4}, leading to the variance of a prior $\sigma^2/n_0$ = \Sexpr{round(var_cornfield_prior(8),2)} and consequently, to $n_0$ = \Sexpr{round(sigma5.4^2/var_cornfield_prior(8),2)} using formula \ref{ex5.4}. Thus the prior under the alternative hypothesis is approximately equivalent to having observed single pair of patients, each with the same response. The function for calculating variance of a prior $\sigma^2/n_0$ =  $\theta_A^2\pi/2$. Calculation of the variance for a "smear" prior was integrated in the package \texttt{bayesianBiostatUZH} as the function \texttt{var\_cornfield\_prior}.
+
+\item \textit{Evidence from the study}. \Sexpr{m2} patients treated with urokinase and \Sexpr{m1} with heparine. Difference in mean response $y_m$ = \Sexpr{mean5.4} with standard error \Sexpr{sd5.4}. Assuming m = \Sexpr{m}, $\sigma = 1.11\sqrt{m}$ = \Sexpr{round(sd5.4*sqrt(m),2)}. 
+
+
+\end{itemize}
+
+\newpage
+
+\begin{figure}[H]
+\centering
+<<example54, results='markdown'>>=
+## --------Code for the example 5.4---------------------------------------
+par(mfrow = c (3,1), las=1)
+x <- seq(-5,10, by = 0.01)
+##  Prior 
+plot(x, dnorm(x, 0, sqrt(var_cornfield_prior(theta.alter5.4))), 
+     cex = 0.1, 
+     ylim = c (-0.05,0.8), ylab = "",
+     main = "(a) Prior distributions", 
+     col = "brown", type = "l", lwd = 2,
+     xlab = "Improvement with urokinase in absolute resolution in 24-hour scan")
+points(c(0,0.5)~c(0,0), type = "l", lwd = 5)
+text(0, 0.6, "prior for Ho (p)", cex = 0.8)
+text(2, 0.09, "prior for Ha (1-p)", col = "brown", cex = 0.8)
+## Likelihood
+##  from the data we have: difference in mean response  = 3.61 with SE 1.11
+plot(x, dnorm(x, mean5.4, sd5.4),col="blue", ylim = c (-0.05,1),
+     type = "l", lwd = 2, ylab = "", 
+     main = "(b) Likelihood",
+     xlab = "Improvement with urokinase in absolute resolution in 24-hour scan")
+abline(v = 0, lwd = 1)
+## Posterior
+## For posterior estmation we use the function "posterior_normal"
+mean_post1 <- posterior_normal(prior.mean = 0, 
+                               prior.sd = sqrt(var_cornfield_prior(theta.alter5.4)), 
+                               estimate.mean = mean5.4, 
+                               estimate.se = sd5.4)[1]
+sd_post1 <- posterior_normal(prior.mean = 0, 
+                             prior.sd = sqrt(var_cornfield_prior(theta.alter5.4)), 
+                             estimate.mean = mean5.4, 
+                             estimate.se = sd5.4)[2]
+##  and the change in the point p of the Ho is calculated using bayes factor
+##  first, we need to calculate test stat
+test_stat_zm <- mean5.4/sd5.4
+n_05.4 <- sigma5.4^2/var_cornfield_prior(8)
+##  then, we can use the formula from the package to calculate bayes factor 
+bf1 <- BF_normal_composite(m,n_05.4, test_stat_zm)
+##  then, setting p = 0.5 we ac calculate posterior on the point H0
+post_Ho <- bf1/(1+bf1)
+plot(x, dnorm(x, mean_post1, sd_post1),col="blue", 
+     ylim = c (-0.05,1),
+     type = "l", lwd = 2, 
+     ylab = "", yaxt='n', 
+     main = "(c) Posterior distribution",
+     xlab = "Improvement with urokinase in absolute resolution in 24-hour scan")
+points(c(0,post_Ho)~c(0,0), type = "l", lwd = 10)
+text(0, 0.55, "0.047", cex = 2)
+@
+\end{figure}
+
+
+\begin{figure}[H]
+\centering
+<<show picture, echo = FALSE>>=
+<<example54>>
+@
+
+\caption{Example of 'lump' and 'smear' prior}
+\label{fig5.4}
+\end{figure}
+
+In Figure \ref{fig5.4} we can see that "lump" dropping dramatically from its prior level. The results is highly significant classically: $z$ = \Sexpr{round(test_stat_zm,2)}, with a two-sided p-value of \Sexpr{round(2*(1-pnorm(test_stat_zm)),3)}.  \cite{sasahara1973urokinase} report that due to many outcome measures and sequential analysis, only $z$ more than 3 would be taken as significant. Bayesian posterior on the $H_0$ is only \Sexpr{round(post_Ho,3)} and not extreme as p-value.
+
+Assumptions concerning the form of the model (the likelihood) should be always carefully defined and strongly supported. In Bayesian approach additionally the same carefulness should be used for the prior distribution, mainly because it is by definition a subjective assumption that is open to valid disagreement. 
+
+The better way would be is to choose a few priors based on the available information (including opinions) and simply report the impact of the data on these priors.
+
+\end{example}
+
+\section{Estimation of prior using hierarchical models}
+
+The basis for hierarchical models is built by assuming that multiple parameters of interest are drawn from some common prior distribution, i.e. they are exchangeable, we can ’borrow strength’ between multiple substudies and improve the precision for each parameter. The three essential assumptions are: 
+
+\begin{itemize}
+\item Exchangeability of parameters $\theta_k$, 
+\item The form for the random-effects distribution of the $\theta_k$, 
+\item Hyperprior distribution for the parameters of the random-effects distribution of the $\theta_k$.
+\end{itemize}
+
+All these assumptions are important, and should be considered carefully.
+
+\section{Empirical criticism of priors}
+
+The ability of subjective prior distributions to predict the true benefits of interventions is clearly of great interest, and \cite{box1980sampling} suggested a methodology for comparing priors with subsequent data. The prior is used to derive a predictive distribution for future observations, and thus to calculate the chance of a result with lower predictive ordinate than that actually observed: when the predictive distribution is symmetric and unimodal, this is analogous to a traditional two sided P-value in measuring the predictive probability of getting a result at least as extreme as that observed. A a pre-trial predictive distribution is 
+
+\begin{equation*}
+Y_m \sim \left[\mu, \sigma^2\left(\frac{1}{n_0}+\frac{1}{m}\right) \right]
+\end{equation*}
+
+Given $y_m$, the predictive probability of observing $Y_m$ less than that observed is 
+
+\begin{equation*}
+\Pr(Y_m < y_m) = \Phi\left(\frac{y_m - \mu}{\sigma\sqrt{\frac{1}{n_0}+\frac{1}{m}}}\right).
+\end{equation*}
+
+Box's generalized significance test gives
+\[
+\mbox{Pbox} = 2 \min[\Pr(Y_m < y_m), 1 - \Pr(Y_m < y_m)]
+\]
+
+
+\begin{example} \label{ex5.11}
+
+The description of the example is below given code. 
+
+\begin{figure}[H]
+\centering
+<<example 5.11, include = TRUE, out.width='3in'>>=
+## --------Code for the example 5.11 from the book---------------------------------
+##  Continuation of the example 3.6 from the book (look at the chapter 3 for the details)
+##  Data estimates are taken from the book example
+mu3.6 <- -0.26 ## (OR = 0.78 on a logOR scale) for a prior
+sd3.6 <- 0.13  ## estimated st deviation of a prior (was based on experts opinion)
+sigma3.6 <- 2 
+m3.6 <- 30.5
+no3.6 <- sigma3.6^2/sd3.6^2
+OR3.6 <- 0.48 ##  observed from the experiment, log(OR3.6) = log OR = -0.74
+##  First, we need to estimate parameters of the normal predictive distribution: 
+result <- predictiveNormal(mu3.6, 2/sqrt(no3.6), 2/sqrt(m3.6))
+mu_pred_2 <- result[1]
+sd_pred_2 <- result[2]
+x <- seq(-1.5, 0.8, by = 0.001)
+##  Box measure using bayesianBiostatUZH package:
+bm <- Boxstat(log(OR3.6), mu_pred_2, sd_pred_2)
+plot(exp(x), dnorm(x, mu_pred_2, sd_pred_2), cex = 0.1, 
+     ylab = "", col = "blue", type = "l", lwd = 2, log = "x",
+     xlab = "Predicted odds ratio of 30-days mortality on home therapy to control", 
+     main = "Predictive distribution")
+polygon(c( exp(x)[exp(x)<=OR3.6], OR3.6 ),  
+        c(dnorm(x, mu_pred_2, sd_pred_2)[exp(x)<=OR3.6], 0.01), col="grey")
+abline(v = OR3.6, lwd =2)
+text(0.35, 0.5, "observed OR = 0.48" )
+text(0.4, 0.1, "Pbox/2" )
+@
+\caption{Predictive distribution for observed OR in the GREAT trial with observed OR = 0.48 marked. Box's measure of conflict between prior and data is twice the shaded area = 0.21}
+\label{fig5.5}
+\end{figure}
+
+
+
+\begin{itemize}
+\item \textit {Reference}. \cite{pocock1992domiciliary}. 
+\item \textit {Intervention}. Thrombolytic therapy after myocardial infarction, given at home by general practitioners
+\item \textit {Aim of study}. To compare anistreplase (a new drug treatment to be given at home as soon as possible after a myocardial infarction) and placebo (conventional treatment). 
+\item \textit {Study design}. Randomized controlled trial.
+\item \textit {Outcome measure}. Thirty-day mortality rate under each treatment, with the benefit of the new treatment measured by the odds ratio, OR, i.e. the ratio of the odds of death following the new treatment to the odds of death on the conventional: OR less than 1 therefore favors the new treatment. 
+\item \textit {Statistical model}. Approximate normal likelihood for the logarithm of the odds ratio.
+\item \textit {Prior distribution}. The prior distribution was based on the subjective judgement of a senior cardiologist, informed by empirical evidence derived from one unpublished and two published trials, who expressed belief that ‘an expectation of 15–20\% reduction in mortality is highly plausible, while the extremes of no benefit and a 40\% relative reduction are both unlikely’. This has been translated to a normal distribution on the log(OR) scale, with a prior mean of $\mu_0$ = \Sexpr{mu3.6} and a standard deviation of \Sexpr{sd3.6}. 
+\end{itemize}
+
+
+
+Based on the experiment $\mu_0$ = \Sexpr{mu3.6}, $n_0$ = \Sexpr{round(sigma3.6^2/sd3.6^2,2)}, $m$ = \Sexpr{m3.6}, $\sigma$ = \Sexpr{sigma3.6} and hence the predictive distribution for the observed log(OR) has mean \Sexpr{round(mu_pred_2,2)} and \Sexpr{round(sd_pred_2,2)}. This is shown in Figure \ref{fig5.5} with the observed OR = \Sexpr{OR3.6} marked. Box's measure is twice the shaded area, which is \Sexpr{round(bm,2)}. Thus, there is no strong evidence for conflict between prior and data in this example.
+
+\end{example}
+

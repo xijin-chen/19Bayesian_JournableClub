@@ -1,0 +1,581 @@
+% LaTeX file for Application Chapter 06
+<<'preamble06',include=FALSE>>=
+library(knitr)
+opts_chunk$set(
+    fig.path='figure/ch06_fig', 
+    self.contained=FALSE,
+    cache=TRUE
+)
+
+# Function Section --------------------------------------------------------
+
+calc_n0 <- function(mu, sd, conf.level) {
+  stopifnot((sd > 0) & (conf.level > 0 & conf.level < 1))
+  n0 <- qnorm(conf.level) ^ 2 * sd ^ 2 / mu ^ 2
+  return(n0)
+}
+
+calc_n <- function(theta, sd, alpha, pwr) {
+  n <- 2*sd^2*(qnorm(pwr)-qnorm(alpha/2))^2/theta^2
+  return(n)
+}
+@
+
+\appChapter{RCTs I: Sample Size}{Lucas}{Kook}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Sample size of non-sequential trials} \label{sec1}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This section primarily focuses on different approaches to statistical power and sample size calculation in clinical trials which are not subjected to interim analyses. In particular, `hybrid' classical-Bayesian methods are described in which prior information is formally used, the final analysis, however, carried out in a classical framework. It is important to note that throughout the section all results will be derived based on a parameter \(\theta\), where \(\theta > 0\) indicates benefit of the experimental intervention. Towards the end this restriction will be resolved allowing for the specification of alternatives like \(\theta>\theta_0\) and \(\theta<\theta_0\). Proofs and derivations of the most important results are provided at the end of the chapter. Additionally, \textsf{R} code implementing the most important results is presented throughout the chapter.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Alternative approaches to sample-size assessment}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+As a brief introduction different approaches to sample size calculation are given.
+
+\begin{description}
+  \item[] \emph{Fisherian.} Since evidence is graded continuously in this framework, there is in principle no need for preplanned sample sizes. However, one possibility is to select a particular precision of measurement and informally decide on a trade off between this precision and the cost of experimentation.
+  \item[] \emph{Neyman-Pearson.} In this hypothesis testing framework the first step is to set up a null hypothesis and specify an alternative hypothesis $H_A$: $\theta=\theta_A$. The trial is now designed to detect the alternative hypothesis with a desired power, oftentimes around 80--90\%. The interpretation of \(\theta_A\) varies. Most prominently it is referred to as the `clinically relevant difference'.
+  \item[] \emph{Hybrid classical and Bayesian.} Recently a hybrid classical-Bayesian framework received considerable attention. Typically the trial is analysed using classical methods in the end. Initially, however, prior information is used solely to design the study.
+\end{description}
+
+Consider the joint probability distribution of hypotheses and potential study outcomes as displayed in table \ref{tab6.1}. In a classical framework point hypotheses are used and the trial is designed around the Type I error \(\alpha = p(D_1 \given H_0)\) and the power \(1-\beta = p(D_1 \given H_1)\). It would be reasonable, on the other hand, to acknowledge prior probabilities for the hypotheses and consider the probability of rejecting \(H_0\) \emph{and} this being the correct decision. This is exactly the joint probability \(p(D_1,H_1)\). Rewriting \(p(D_1,H_1)=p(D_1 \given H_1)p(H_1)=(1-\beta)p(H_1)\), this simply means adjusting the power by the initial probability assigned to the alternative hypothesis. The major downside of using the conditional power \(p(D_1 \given H_1)\) is that the plausibility of the alternative is not taken into account and thus there exists a danger of deluding oneself into designing trials based on implausible alternatives.
+
+\begin{table}[!ht]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\caption{Joint probability distribution of hypotheses and outcomes of a hypothesis test.}
+\begin{tabular}{llccr}
+\hline
+        &                                 & \multicolumn{2}{c}{Truth}                                                                                                                                             & \multicolumn{1}{l}{} \\ \cline{3-4}
+        &                                 & \(H_0\)                                                                           & \(H_1\)                                                                           & \multicolumn{1}{l}{} \\ \hline
+Outcome & \(D_0\): do not reject \(H_0\) & \(\!\begin{aligned} p(D_0, H_0) = \\ \Pr(\text{correct negative}) \end{aligned}\) & \(\!\begin{aligned} p(D_0, H_1) = \\ \Pr(\text{false negative}) \end{aligned}\)   & \(p(D_0)\)           \\
+        & \(D_1\): reject \(H_0\)        & \(\!\begin{aligned} p(D_1, H_0) = \\ \Pr(\text{false positive}) \end{aligned}\)   & \(\!\begin{aligned} p(D_1, H_1) = \\ \Pr(\text{correct positive}) \end{aligned}\) & \(p(D_1)\)           \\
+        &                                 & \(p(H_0)\)                                                                        & \(p(H_1)\)                                                                        & 1                    \\ \hline
+\end{tabular}
+\label{tab6.1}
+\end{table}
+
+The unconditional probability of `positively' concluding the trial is 
+\begin{align*}
+p(D_1)=p(D_1,H_0)+p(D_1,H_1)
+\end{align*}
+and the first term \(p(D_1,H_0)=p(D_1 \given H_0)p(H_0)\), the probability of obtaining a false positive result, will be very small provided that \(\alpha = p(D_1 \given H_0)\) is considerably small and the prior belief is genuinely supportive of \(H_1\). Thus,
+\begin{align}
+	p(D_1) \approx p(D_1 \given H_1)p(H_1) = (1-\beta)p(H_1);
+	\label{eq6.1}
+\end{align}
+and the `prior adjusted power' \((1-\beta)p(H_1)\) will frequently be close to the uncoditional probability of obtaining a `positive' result.
+
+Matters get more complicated when considering composite hypotheses instead of point hypotheses, i.e. \(H_0:\theta \leq 0\) and \(H_A:\theta > 0\). Instead of a point probability, the classical power depends on \(\theta\), resulting in a \emph{power curve}, given by \(p(D_1 \given \theta)\). Incorporating prior information is adapted by using a prior distribution \(p(\theta)\).
+
+\cite{sam:2004} describe several ways to incorporate the prior.
+
+\begin{enumerate}
+  \item Superimpose the prior distribution on the conditional power curve to judge the relative plausibility of alternative hypotheses. This may prevent trials being designed around overly optimistic alternatives.
+  \item The prior mean \(\mu\) can be taken as a point alternative, akin to the `clinically relevant difference' in the \emph{Neyman-Pearson} approach. This does not take into account prior uncertainty about \(\theta\).
+  \item The classical power curve may be averaged w.r.t. the prior distribution to obtain the `average classical power' \(p(D_1)=\int p(D_1 \given \theta)p(\theta)\mathrm{d}\theta\). This is expected to be close to the prior adjusted power if the prior does not account substantial probabilities to values \(\theta < 0\).
+  \item The classical power curve can be averaged with respect to the prior distribution conditioned on \(H_A\) being true, \(p(\theta \given H_A)=p(\theta \given \theta>0)\). Here, again potential implausibility of \(H_A\) is not taken into account.
+  \item The predictive distribution over the possible powers can be displayed as a mean to deciding appropriate sample sizes.
+\end{enumerate}
+
+In the following those options will be illustrated using normal likelihoods and priors assuming a known variance.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{`Classical power': hybrid classical-Bayesian methods assuming normality} \label{hbp}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Assume a prior distribution to be used in the study design, but all conclusions will be based on classical statistics without considering the prior. Suppose the prior is normal with \(\theta \sim \mathrm{N}[\mu,\sigma^2/n_0]\) and the future data \(Y_n\) follow \(Y_n  \given  \theta \sim \mathrm{N}[\theta,\sigma^2/n]\). Now what is the predictive probability of obtaining a classically `significant' result when testing \(\theta < 0\)? The null hypothesis will be rejected if \(Y_n\) adheres to
+%
+\begin{align}
+	Y_n > - \frac{1}{\sqrt{n}} z_\epsilon \sigma.
+	\label{eq6.2}
+\end{align}
+%
+Let this event be denoted \(S^C_\epsilon\), which will occur with probability
+%
+\begin{align}
+	\Pr(S^C_\epsilon  \given  \theta) = \Phi \bigg[ \frac{\theta \sqrt{n}}{\sigma} + z_\epsilon \bigg],
+	\label{eq6.3}
+\end{align}
+%
+which is easily recognised to be the classical power curve for a one-sided alternative.
+
+The function \texttt{classical\_pwr()} implements equation \eqref{eq6.3} to calculate the classical power in a vectorized fashion. It takes as input a vector of values for $\theta$ and numbers for $n$, $\sigma$ and $\epsilon$.
+
+<<classical_pwr, echo=TRUE, eval=TRUE>>=
+classical_pwr(theta = 0.56, n = 100, sd = 2, eps = 0.025) %>% 
+round(2)
+@
+
+In figure \ref{fig6.3} equation \eqref{eq6.3} is superimposed on the prior \(p(\theta)\), providing insight about the relative plausibility of potential alternative hypotheses. Naturally, it would be interesting to calculate the overall unconditional probability of a `positive' trial result \(S^C_\epsilon\). For that one could integrate \eqref{eq6.3} w.r.t. the prior or derive a closed form result using the predictive distribution
+%
+\begin{align}
+	Y_n \sim \mathrm{N}\bigg[ \mu, \sigma^2 \bigg(\frac{1}{n_0} + \frac{1}{n} \bigg) \bigg] \label{eq:3.23}.
+\end{align}
+%
+The result can be interpreted as the `expected' or `average' classical power and is given by
+%
+\begin{align}
+	\Pr(S^C_\epsilon) = \Phi\bigg[\sqrt{\frac{n_0}{n_0 + n}}\bigg(\frac{\mu\sqrt{n}}{\sigma} + z_\epsilon\bigg)\bigg].
+	\label{eq6.4}
+\end{align}
+%
+Note that as \(n_0 \rightarrow 0\), \eqref{eq6.4} tends to the classical power curve given in \eqref{eq6.3}. As \(n_0 \rightarrow \infty\), the prior gets concentrated on \(\mu\) and \(\Pr(S^C_\epsilon)\) tends to the classical power evaluated at the prior mean \(\mu\). If \(n_0\) is finite, the expected power will always be less than the classical power evaluated at \(\mu\), when the classical power is larger than 50\%.
+
+The average classical power \eqref{eq6.4} is implemented in the \texttt{average\_classical\_pwr()} function. One needs to supply it with the prior mean $\mu$, the prior sample size $n_0$, the sample size $n$, the standard deviation $\sigma$ and the significance level $\epsilon$.
+
+<<avg_c_pwer, echo=TRUE, eval=TRUE>>=
+average_classical_pwr(mu = 0.56, n0 = 34, n = 100, sd = 2, eps = 0.025) %>% 
+	round(2)
+@
+
+
+%---------------------------------------------------------------------
+\begin{example}[Classical and hybrid power] \label{ex6.2}
+Imagine our aim is to design a trial to investigate a new cancer treatment. We want to detect a log hazard ratio of $\theta_A = 0.56$ with a power of 80\%. This would require $n = \frac{\sigma^2}{\theta^2}(z_{0.8}-z_{0.025})^2 = 100$ events at a two-sided $\alpha=0.05$ and with standard deviation $\sigma=2$. For the hybrid and fully Bayesian analysis we assume an enthusiastic prior centered around $\mu = \theta_A$ with $\sigma = 2$ and choose $\sigma^2/n$ in such a way that $\Pr(\theta < 0 \mid H_1) = 0.05$. From $\mu+z_\epsilon\sigma/\sqrt{n_0}$ we know that $n_0=34.5$. The expected classical power can be found to be \Sexpr{round(average_classical_pwr(mu = 0.56, n0 = 34, n = 100, sd = 2, eps = 0.025),2)}, which is considerably lower than 0.8. Figure \ref{fig6.3} shows the classical and the Bayesian power curve (to be discussed in example \ref{ex6.3}) superimposed on the enthusiastic prior chosen for the hybrid power analysis.
+\end{example}
+%---------------------------------------------------------------------
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{`Bayesian power'}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Now the focus is shifted towards a Bayesian approach to power. First of all, a result can be considered `significant' in a Bayesian framework if the posterior probability of the null hypothesis is smaller than some predefined $\epsilon \in (0,1)$. This event will be denoted as
+%
+\begin{align*}
+	S^B_\epsilon \equiv \Pr(\theta<0 \given \text{data}) < \epsilon.
+\end{align*}
+%
+Using the posterior distribution of $\theta$, 
+%
+\begin{align*}
+	\theta  \given  Y_n \sim \mathrm{N}\bigg[ \frac{n_0\mu + nY_n}{n_0 + n}, \frac{\sigma^2}{n_0 + n} \bigg],
+\end{align*}
+%
+when does $S^B_\epsilon$ occur? It is straightforward to show (\textit{cf.} section \ref{proofs}) that $S^B_\epsilon$ occurs whenever the following inequality holds:
+%
+\begin{align}
+	Y_n > \frac{-\sqrt{n_0+n}~z_\epsilon \sigma - n_0\mu}{n}.
+	\label{eq6.5}
+\end{align}
+%
+For a particular value of $\theta$ we assumed $Y_n \sim \text{N}[\theta, \sigma^2/n]$, which yields 
+%
+\begin{align}
+	\Pr(S^B_\epsilon \given \theta) = \Phi \bigg[ \frac{\theta\sqrt{n}}{\sigma} + \frac{n_0 \mu}{\sigma\sqrt{n}} + \sqrt{\frac{n_0 + n}{n}} z_\epsilon \bigg]
+	\label{eq6.6}
+\end{align}
+%
+as the Bayesian power curve. Notice that this equation tends towards the classical power curve given in \ref{eq6.3} when $n_0 \rightarrow 0$.
+
+The Bayesian power \eqref{eq6.6} is implemented in \texttt{bayesian\_pwr()}. It takes as input $\theta$, $n$, $\sigma$, $\epsilon$, $\mu$ and $n_0$.
+
+<<bayesian_pwr, echo=TRUE, eval=TRUE>>=
+bayesian_pwr(theta = 0.56, n = 100, sd = 2, eps = 0.025, mu = 0.56, n0 = 34) %>% 
+	round(2)
+@
+
+
+Analogous to hybrid power in section \ref{hbp}, interest in the unconditional probability of the occurence of $S^B_\epsilon$ arises naturally. The resulting equation may be interpreted as the expected (or `average') Bayesian power. In section \ref{proofs} the result is obtained again by using the predictive distribution of $Y_n$ and culminates in
+%
+\begin{align}
+	\Pr(S^B_\epsilon) 
+	&= \Pr\bigg( Y_n > \frac{-\sqrt{n_0+n}~z_\epsilon \sigma - n_0\mu}{n} \bigg) \nonumber \\
+	&= \Phi\bigg[ \frac{\mu\sqrt{n_0+n}\sqrt{n_0}}{\sigma\sqrt{n}} + \sqrt{\frac{n_0}{n}}z_\epsilon \bigg].
+	\label{eq6.7}
+\end{align}
+
+The average Bayesian power is implemented in \texttt{average\_bayesian\_pwr()}. The function takes the same input as \texttt{average\_classical\_pwr()}.
+
+<<avg_b_pwr, echo=TRUE, eval=TRUE>>=
+average_bayesian_pwr(mu = 0.56, n0 = 34, n = 100, sd = 2, eps = 0.025) %>% 
+	round(2)
+@
+
+%---------------------------------------------------------------------
+\begin{example}[Bayesian power] \label{ex6.3}
+Based on example \ref{ex6.2} the Bayesian power curve and expected Bayesian power is illustrated in this example. In \textsf{R} one can use the \texttt{hybrid\_power\_analysis()} function to retrieve the classical and Bayesian power curve, as well as the average classical and Bayesian power and the classical and Bayesian power evaluated at the mean of the enthusiastic prior. Additionally, type I error probabilities are reported in both frameworks.
+
+<<illustration, echo=TRUE>>=
+# Specify Parameters ------------------------------------------------------
+
+mu <- 0.56
+sd <- 2
+conf.level <- 0.95
+eps <- 0.025
+n <- 100
+n0 <- calc_n0(mu = mu, sd = sd, conf.level = conf.level)
+thetas <- seq(-1, 2, length.out = 1000)
+
+# Run ---------------------------------------------------------------------
+
+result <- hybrid_power_analysis(
+	mu = mu,
+	n0 = n0,
+	n = n,
+	sd = sd,
+	eps = eps,
+	conf.level = conf.level,
+	par_range = c(-0.5, 1),
+	alternative = "greater.than",
+	type = "one.sample"
+)
+
+glimpse(result)
+@
+
+Figure \ref{fig6.3} (a) displays the Bayesian power curve as a dashed line. It is evident that the Bayesian power curve is always larger than the classical power curve, leading to an inflation of the Type I error, which amounts to \Sexpr{round(result$b.Ierror, 3)} compared to \Sexpr{round(result$c.Ierror, 3)} in the classical power curve. However, also the power at the alternative $\theta_A = 0.56$ is much higher with \Sexpr{round(result$b.pwr_at_mu, 2)} compared to \Sexpr{round(result$c.pwr_at_mu, 2)}. The average Bayesian power in this trial is much closer to the desired 0.8, being \Sexpr{round(result$b.pwr_avg, 2)}.
+
+\end{example}
+%---------------------------------------------------------------------
+
+\begin{figure}[!ht]
+\centering
+<<fig6_3, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE>>=
+# Code for Chapter 6 Part 1 of Spiegelhalter 2006
+# Bayesian Sample Size Estimation
+# Author: Lucas Kook
+# Date: 2019/03/09
+
+# Specify Parameters ------------------------------------------------------
+
+mu <- 0.56
+sd <- 2
+conf.level <- 0.95
+eps <- 0.025
+n <- 100
+n0 <- calc_n0(mu = mu, sd = sd, conf.level = conf.level)
+thetas <- seq(-1, 2, length.out = 1000)
+
+
+# Run ---------------------------------------------------------------------
+
+complete_analysis <-
+  hybrid_power_analysis(
+    mu = mu,
+    n0 = n0,
+    n = n,
+    sd = sd,
+    eps = eps,
+    conf.level = conf.level,
+    par_range = c(-0.5, 1),
+    alternative = "greater.than", 
+    type = "one.sample"
+  )
+
+par(mfrow = c(2, 1))
+
+with(complete_analysis, {
+	plot(
+		par_vals,
+		c.pwr,
+		type = "l",
+		xlim = range(par_vals) * 1.1,
+		ylim = c(0, 1),
+		ylab = "Power",
+		xlab = expression(theta),
+		bty = "n",
+		las = 1,
+		lwd = 1.5
+	)
+	mtext(
+		text = "(a) Power Curves",
+		side = 3,
+		line = 1,
+		adj = 0,
+		font = 6
+	)
+	lines(par_vals, b.pwr, lty = 2)
+	abline(v = c(0, mu), col = "grey")
+	plot(
+		par_vals,
+		prior.dens,
+		type = "l",
+		xlab = expression(theta),
+		ylab = expression(p(theta)),
+		xlim = range(par_vals) * 1.1,
+		bty = "n",
+		las = 1,
+		lwd = 1.5
+	)
+	mtext(
+		text = "(b) Prior Density",
+		side = 3,
+		line = 1,
+		adj = 0,
+		font = 6
+	)
+	abline(v = c(0, mu), col = "grey")
+	
+})
+@
+\caption{Power curves (a) for testing \(H_A:\theta>0\), designed to have 80\% classical power at \(\theta_A=0.56\). The Bayesian power curve (a, dashed line) includes the enthusiastic prior displayed in (b).}
+\label{fig6.3}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Adjusting formulae for different hypotheses} \label{diffhyp}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+So far only $H_0: \theta < 0$ was considered. The aim of this subsection is to generalise all results obtained above about classical, hybrid and Bayesian power. \textsf{R} code which implements all alternatives discussed in this section, is supplied in example \ref{ex6.4}. Figure \ref{fighyp} displays the various hypotheses that can be used to design a trial. 
+
+\begin{figure}
+\centering
+<<hypothesesPlot, echo=FALSE, fig.height=4, fig.width=6, results='hide'>>=
+plotdat <- data.frame(
+	start = rev(c(-2.4, -1.8, -1.2, -0.8, -0.1, 1.2)),
+	end = rev(c(-1.2, 0, 1.2, 0.8, 1.4, 2.4)),
+	height = seq(1, 7.5, length.out = 6),
+	label = c("new superior", "new not superior", "equivocal",
+						"inconclusive", "old not superior", "old superior")
+	)
+
+ggplot(plotdat) +
+	theme_void() +
+	xlim(-2.5, 2.5) +
+	ylim(-1, 8) +
+	geom_segment(aes(x = -1, y = 0, xend = -1, yend = 8), col = "grey") +
+	geom_segment(aes(x = 1, y = 0, xend = 1, yend = 8), col = "grey") +
+	geom_hline(yintercept = 0) +
+	annotate("text", x = -1, y = -0.5, label = "theta[l]", parse = TRUE, size = 5) +
+	annotate("text", x = 1, y = -0.5, label = "theta[u]", parse = TRUE, size = 5) +
+	geom_text(aes(x = -2, y = -0.75, label = "old treatment \n superior"), size = 4) +
+	geom_text(aes(x = 0, y = -0.75, label = "margin of \n equivalence"), size = 4) +
+	geom_text(aes(x = 2, y = -0.75, label = "new treatment \n superior"), size = 4) +
+	geom_segment(aes(x = start, y = height, xend = end, yend = height), arrow = arrow(length = unit(0.2, "cm"), ends = "both", type = "closed")) +
+	geom_text(aes(x = (end+start)/2, y = height, label = label), nudge_y = 0.4, nudge_x = 0, size = 4)
+@
+\caption{Specification of different hypotheses.}
+\label{fighyp}
+\end{figure}
+
+
+Three distinct cases are highlighted in the following:
+\begin{align*}
+	H_0&: \theta_1 > \theta_2, \\ 
+	H_0&: \theta < \theta_0 \; \text{and} \\ 
+	H_0&: \theta > 0.
+\end{align*}
+
+The first case can be rewritten as $\theta_1 - \theta_2 > 0$ and represents a two group contrast in a parallel group RCT. Here, the variance of the difference in means is to be taken into account and thus $\tilde\sigma^2 = 2\sigma^2$ has to be used in the analysis.
+
+The second case is easily accounted for by subtracting $\theta_0$ from $y_m$ and $\mu$ everywhere. Hence, all equations are reparameterised by $\tilde\theta = \theta - \theta_0$ and $\tilde y_n = y_n - \theta_0$ and used as introduced in section \ref{sec1}. Note that $\theta_0$ is considered to be known.
+
+Lastly, reverting the directionality of $H_0$ such that smaller values of $\theta$ indicate a treatment benefit leads to the following reparameterisation of the presented formulae:
+\begin{align*}
+	S^{B-}_\epsilon 
+	&\equiv [\Pr(\theta > 0  \given  \text{data})<\epsilon] \\
+	&\equiv [\Pr(\theta < 0  \given  \text{data}) > 1 - \epsilon].
+\end{align*}
+Hence, we arrive at the conclusion that $\Pr(S^{B-}_\epsilon)=1-\Pr(S^B_{1-\epsilon})$, where $S^{B-}_\epsilon$ denotes the event of obtaining a significant result in the Bayesian sense at level $\epsilon$ under a null hypothesis $\theta>0$.
+
+\begin{example}[Different alternative hypotheses] \label{ex6.4}
+To implement the various different null hypotheses \texttt{bayesianBiostatUZH} includes a wrapper function that uses the aforementioned functions and adjusts the output for all possible null hypotheses discussed in section \ref{diffhyp}. Now consider example 6.4 from the book. For illustratory purposes the sign of the clinically relevant difference is flipped and negative values of the parameter are considered positive, such that other alternative hypotheses can be explored (\texttt{alternative = "less.than"}).
+
+<<ex6.4, echo=TRUE>>=
+
+# Specify Parameters ------------------------------------------------------
+
+crd <- -0.39 # clinically relevant difference
+mu <- -0.12 # clinical prior mean
+sd <- 2 # standard deviation
+conf.level <- 0.95 # confidence level
+eps <- 0.025 # alpha/2
+n <- 276 # number of events (from planned sample size)
+n0 <- 111 # From clinical prior (since sd/n0=0.19 was observed)
+
+nobs <- 281 # number of observed events (137 under D1, 144 under D2)
+theta_hat <- 0.09 # parameter estimate (log HR in this case)
+se_theta_hat <- 0.11 # uncertainty in theta_hat
+
+mu_pred <- mu # mean for the predictive distribution
+sd_pred <- sd*sqrt(1/n0 + 1/nobs) # sd for the predictive distribution
+
+# Run ---------------------------------------------------------------------
+
+res <- hybrid_power_analysis(
+    mu = mu,
+    n0 = n0,
+    n = n,
+    sd = sd,
+    eps = eps,
+    conf.level = conf.level,
+    par_range = -c(-0.5, 1),
+    alternative = "less")
+@
+
+The return value of \texttt{hyrbid\_power\_analysis()} is a list containing the parameter values (\texttt{par\_vals}), the classical power curve \texttt{c.pwr} and average classical power \texttt{c.pwr\_avg} with Type I error (\texttt{c.Ierror}), as well as the Bayesian power curve (\texttt{b.pwr}), with the average Bayesian power (\texttt{b.pwr\_avg}) and the Bayesian Type I error (\texttt{b.Ierror}). Lastly, the prior density (\texttt{prior.dens}) is returned. The results are shown in figure \ref{fig6.4}.
+
+\begin{figure}[!ht]
+\centering
+<<fig6_4, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE>>=
+par(mfrow = c(2,2), bty = "n", las = 1, mar = c(4.1, 5.1, 2.1, 1.1))
+plot(res$par_vals, res$prior.dens, type = "l", xlab = expression(theta), ylab = expression(p(theta)))
+abline(v = c(0, crd), col = "grey")
+mtext(text = "(a) Clinical prior", side = 3, line = 1, adj = 0, cex = 0.8, font = 6)
+plot(res$par_vals, res$c.pwr, type = "l", xlab = expression(theta), ylab = expression(Pr(italic(S)[epsilon]^italic(C)~"|"~theta)))
+abline(v = c(0, crd), col = "grey")
+mtext(text = "(b) Classical power curve", side = 3, line = 1, adj = 0, cex = 0.8, font = 6)
+plot(res$par_vals, dnorm(x = res$par_vals, mean = theta_hat, sd = se_theta_hat), type = "l", xlab = expression(theta), 
+     ylab = expression(L(theta~"|"~t[1:n])))
+abline(v = 0, col = "grey")
+mtext(text = "(c) Likelihood", side = 3, line = 1, adj = 0, cex = 0.8, font = 6)
+plot(res$par_vals, dnorm(x = res$par_vals, mean = mu_pred, sd = sd_pred), type = "l", xlab = expression(hat(theta)), ylab = expression(p(hat(theta))))
+abline(v = c(0, theta_hat), col = "grey")
+mtext(text = "(d) Predictive distribution", side = 3, line = 1, adj = 0, cex = 0.8, font = 6)
+@
+\caption{The prior (a) as assessed in the D2 trial in gastric cancer surgery conveys some expectation of treatment benefit, whereas the alternative hypothesis of 0.68 is grossly optimistic (b). The actual trial result is displayed in (c) and shows no clear evidence for a treatment effect. Lastly, the predicitve distribution derived (d) from the prior in (a) assigns a reasonably high probability to the observed result (\(\log\text{HR}=0.09\)), which is thus not particularly surprising when incorporating prior opinion.}
+\label{fig6.4}
+\end{figure}
+
+\end{example}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Predictive distribution of power and necessary sample size}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<calcn, include=FALSE>>=
+nnn <- ceiling(calc_n(theta = 0.5, sd = 1, alpha = 0.05, pwr = 0.8))
+@
+
+%---------------------------------------------------------------------
+\begin{example}[Predictive distribution of power and sample size] \label{ex6.5}
+Consider $\theta$ and $\sigma$ as random variables with their own uncertainty. This inevitably leads to larger uncertainties in the observed power and highlights the importance to investigate the predictive distribution for power and sample size. Spiegelhalter uses MCMC methods to evaluate those predictive distributions by assuming a two-arm RCT with $\sigma^2 = 1$ in a single arm, $\alpha = 0.05$, $\beta = 0.2$ and a true effect of $\theta = 0.5$. Note that by calculating the contrast between the two arms the variance for this estimate will be $2\sigma^2 = 2$. Taking a classical approach, without considering uncertainty in either $\theta$, or $\sigma$ the planned sample size would be $n = \frac{2\sigma^2}{\theta^2}(z_{0.8}-z_{0.025})^2 =$ \Sexpr{nnn}. Now priors are introduced with the following assumptions
+%
+\begin{align*}
+	\theta &\sim \text{N}\bigg[0.5,~0.1^2\bigg] \\
+	\sigma &\sim \text{N}\bigg[1,~0.3^2\bigg] \\
+	\theta &\perp \sigma
+\end{align*}
+%
+where $\sigma$ is of course constrained to be strictly positive. The approach is now to simulate realisations of $\theta$ and $\sigma$ and to calculate
+%
+\begin{align*}
+	1-\beta ~~ \text{for fixed} ~~ n = \Sexpr{nnn} \\
+	{n} ~~ \text{for fixed} ~~ 1-\beta = 0.8
+\end{align*}
+%
+and visualise their distributions. What is done and displayed in figure \ref{fig6.5} shows that a classical approach to power without including uncertainty about the parameter's uncertainty can yield strongly varying results. Note that the average classical power can also be calculated by averaging over the posterior distribution for the power. An equivalent approach is not possible using the predictive distribution for the sample size, which is not bounded. Quite frequently in this simulation more than $10$-times the originally planned sample size would be needed to achieve 80\% power (red dashed lines in figure \ref{fig6.5}).
+
+In \textsf{R} the simulation can be carried out using the \texttt{simulate\_pwr()} function. The function returns the random draws of $\theta$ and $\sigma$ and the power and sample size for fixed sample size and power calculated at those random draws, respectively.
+
+<<illustration2, echo=TRUE>>=
+set.seed(241068)
+
+# Calculate n as in the example
+n <- ceiling(calc_n(theta = 0.5, sd = 1, alpha = 0.05, pwr = 0.8))
+
+res <- simulate_pwr(
+	nsim = 10000, # Number of simulations
+	prior_mu_theta = 0.5, # prior mean on theta
+	prior_sd_theta = 0.1, # prior sd on theta
+	prior_mu_sigma = 1, # prior mean on sigma
+	prior_sd_sigma = 0.3, # prior sd on sigma
+	n = n, # fixed sample size
+	alpha = 0.05, # type I error
+	pwr = 0.8 # power
+)
+
+glimpse(res)
+@
+
+\end{example}
+%---------------------------------------------------------------------
+
+\begin{figure}[!ht]
+\centering
+<<fig6_5, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE, fig.height=4, fig.width=7>>=
+# Example 6.5, p. 200 (Spiegelhalter 2006)
+# Author: Lucas Kook
+# Date: 2019/03/09
+
+par(mfrow = c(1,2), bty = "n", las = 1, mar = c(4.1, 5.1, 2.1, 1.1))
+hist(res$power, breaks = 50, xlim = c(0,1), main = "", xlab = expression(Pr(italic(S)[epsilon]^italic(C)~"|"~theta)), col = "cornflowerblue", probability = TRUE)
+hist(res$n, breaks = 50, main = "", xlab = expression(italic(n)), col = "cornflowerblue", probability = TRUE)
+points(res$n[res$n > 10*n], rep(0, length(res$n[res$n > 10*n])), col = "red", pch = "|")
+@
+\caption{Simulated predictive distributions for the power (left panel) with \(n = \) \Sexpr{nnn} patients per group and the necessary sample size \(n\) (right panel) to achieve 80\% power, displayed as histograms. In both cases the number of simulations were \(n_\text{sim}=10000\). To indicate particularly extreme sample sizes, simulations exceeding 630 (10 times higher than the planned sample size) are ticked in red.}
+\label{fig6.5}
+\end{figure}
+
+\begin{table}[!ht]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\caption{Properties of predictive distributions of necessary sample size \(n\) for fixed power of 80\%, and power for fixed sample size \(n = \) \Sexpr{nnn}.}
+<<tab6.2, echo=FALSE, error=FALSE, warning=FALSE, message=FALSE, results='asis'>>=
+apply(res[, c("power", "n")], 2, function(x) {
+	c(Median = median(x), quantile(x, probs = c(0.025, 0.975)))
+}) %>% t() %>% as.data.frame() %>% 
+	rownames_to_column(var = " ") %>% 
+	mutate(interval = biostatUZH::formatCI(cbind(`2.5%`, `97.5%`), 
+																				 text = "english", digits = 2)) %>% 
+	select(` `, Median, interval) %>% 
+	knitr::kable(digits = 2, col.names = c("", "Median", "95% Interval"), align = "c",
+							 booktabs = TRUE, format = "latex")
+@
+\label{tab6.2}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proofs and derivations} \label{proofs}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{enumerate}
+	\item{
+	Derivation of \eqref{eq6.3}:
+\begin{align*}
+	\Pr(S^C_\epsilon  \given  \theta) 
+	&= \Pr\bigg(Y_n > - \frac{1}{\sqrt{n}} z_\epsilon \sigma \bigg | \theta \bigg) = 1 - \Pr\bigg(Y_n \leq - \frac{1}{\sqrt{n}} z_\epsilon \sigma \bigg | \theta \bigg) \\
+	&= 1 - \Phi\bigg[\frac{- z_\epsilon \sigma /\sqrt{n} - \theta}{\sigma/\sqrt{n}}\bigg] = \Phi\bigg[\frac{z_\epsilon \sigma /\sqrt{n} + \theta}{\sigma/\sqrt{n}}\bigg] \\
+	&= \Phi\bigg[\frac{\theta \sqrt{n}}{\sigma} + z_\epsilon \bigg]
+\end{align*}
+	}
+	\item{
+	Derivation of \eqref{eq6.4}: Using the predictive distribution of \(Y_n\) we have
+\begin{align*}
+	\Pr(S^C_\epsilon) 
+	&= \Pr\bigg[Y_n > - \frac{1}{\sqrt{n}} z_\epsilon \sigma \bigg] = 1 - \Pr\bigg[ Y_n \leq - \frac{1}{\sqrt{n}} z_\epsilon \sigma \bigg] \\
+	&= 1 - \Phi\bigg[ \frac{-z_\epsilon\sigma/\sqrt{n}-\mu}{\sigma\sqrt{1/n_0+1/n}} \bigg] = 1 - \Phi\bigg[ -\frac{z_\epsilon}{\sqrt{\frac{n_0+n}{n_0}}} - \frac{\mu}{\sigma\sqrt{\frac{n_0+n}{n_0n}}} \bigg] \\
+	&= \Phi\bigg[\sqrt{\frac{n_0}{n_0+n}} z_\epsilon + \sqrt{\frac{n_0}{n_0+n}}\frac{\sqrt{n}\mu}{\sigma}\bigg] = \Phi\bigg[\sqrt{\frac{n_0}{n_0 + n}}\bigg(\frac{\mu\sqrt{n}}{\sigma} + z_\epsilon\bigg)\bigg]
+\end{align*}
+	}
+	\item{
+	Derivation of \eqref{eq6.5}:
+\begin{align*}
+	&\phantom{\Leftrightarrow}\Pr(\theta < 0  \given  \text{data}) < \epsilon \\
+	&\Leftrightarrow \Phi\bigg[ -\frac{n_0\mu+nY_n}{n_0+n} \cdot \frac{\sqrt{n_0 + n}}{\sigma} \bigg] < \epsilon \\ 
+	&\Leftrightarrow -\frac{n_0\mu+nY_n}{\sigma\sqrt{n_0+n}} > z_\epsilon \\
+	&\Leftrightarrow Y_n > \frac{-\sqrt{n_0+n}~z_\epsilon \sigma - n_0\mu}{n}
+\end{align*}
+	}
+	\item{
+	Derivation of \eqref{eq6.6}: Starting with the likelihood for a particular, known value of \(\theta\) we have
+\begin{align*}
+	\Pr(S^B_\epsilon  \given  \theta)
+	&= 1 - \Phi\bigg[ \bigg( \frac{-\sqrt{n_0 + n} z_\epsilon\sigma-n_0\mu}{n} -\theta \bigg) \sqrt{n}/\sigma \bigg] \\ 
+	&= 1 - \Phi\bigg[ - \frac{\sqrt{n_0 + n} z_\epsilon}{\sqrt{n}} - \frac{n_0\mu}{\sigma\sqrt{n}} - \frac{\theta\sqrt{n}}{\sigma}\bigg] \\
+	&= \Phi \bigg[ \frac{\theta\sqrt{n}}{\sigma} + \frac{n_0 \mu}{\sigma\sqrt{n}} + \sqrt{\frac{n_0 + n}{n}} z_\epsilon \bigg]
+\end{align*}
+	}
+	\item{
+	Derivation of \eqref{eq6.7}:
+\begin{align*}
+	\Pr(S^B_\epsilon) 
+	&= \Pr\bigg( Y_n > \frac{-\sqrt{n_0+n}~z_\epsilon \sigma - n_0\mu}{n} \bigg) \\ 
+	&= 1 - \Phi\bigg[ \bigg( \frac{-\sqrt{n_0+n}~z_\epsilon \sigma - n_0\mu}{n}-\mu \bigg) \cdot \sqrt{\frac{n_0n}{n_0+n}} \cdot \frac{1}{\sigma} \bigg] \\
+	&= 1 - \Phi\bigg[ -\frac{\sqrt{n_0+n}~z_\epsilon \sigma}{n} \cdot \sqrt{\frac{n_0n}{n_0+n}} \cdot \frac{1}{\sigma} - \frac{n_0 \mu}{n} \cdot \sqrt{\frac{n_0n}{n_0+n}} \cdot \frac{1}{\sigma} - \mu \cdot \sqrt{\frac{n_0n}{n_0+n}} \cdot \frac{1}{\sigma}\bigg] \\
+	&= \Phi\bigg[ \sqrt{\frac{n_0}{n}}z_\epsilon + \frac{n_0 \sqrt{n_0}}{\sqrt{n}\sqrt{n_0+n}\sigma} \mu + \frac{\sqrt{n_0}\sqrt{n}}{\sqrt{n_0+n}\sigma} \mu \bigg] \\
+	&= \Phi\bigg[ \sqrt{\frac{n_0}{n}}z_\epsilon + \frac{n_0 \sqrt{n_0}}{\sqrt{n}\sqrt{n_0+n}\sigma} \mu + \frac{\sqrt{n_0}n}{\sqrt{n}\sqrt{n_0+n}\sigma} \mu \bigg] \\ 
+	&= \Phi\bigg[ \sqrt{\frac{n_0}{n}}z_\epsilon + \frac{\mu\sqrt{n_0+n}\sqrt{n_0}}{\sigma\sqrt{n}} \bigg]
+\end{align*}
+	}
+\end{enumerate}
+

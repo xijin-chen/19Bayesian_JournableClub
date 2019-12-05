@@ -1,0 +1,421 @@
+\usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+\usepackage{fancyhdr}
+\usepackage{calc}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{float}
+\usepackage{natbib}
+\usepackage{array}
+\usepackage[margin=2em,labelfont=bf]{caption}
+\usepackage[margin=2em]{subcaption}
+\usepackage[english]{babel}
+\usepackage[pdftex,plainpages=false,pdfpagelabels,pagebackref=true,colorlinks=true,pdfpagemode=UseOutlines]{hyperref}
+\usepackage{graphicx}
+
+
+\renewcommand{\baselinestretch}{1.2}
+\renewcommand{\textfraction}{.01}%0.2     % placement of figures
+\renewcommand{\topfraction}{0.99}%.3
+\renewcommand{\bottomfraction}{0.99}%.3
+\renewcommand{\floatpagefraction}{0.99}%.3
+\setcounter{bottomnumber}{3}%1
+
+
+\makeatletter
+
+\def\ds{\displaystyle}
+\textwidth6.3in
+\textheight9.7in
+\topmargin-45pt
+\oddsidemargin0in
+\evensidemargin0in
+\headsep30pt
+\headheight15pt
+%\footskip20pt
+
+
+\definecolor{DarkBlue}{rgb}{0,0,0.5451}
+\definecolor{DarkGreen}{rgb}{0,0.39216,0}
+\definecolor{LightYellow}{rgb}{1,1,.8}
+\definecolor{orange}{rgb}{.9,0.3445,0}
+
+
+%umdefinierung exisitierender befehle
+\let\oldH\H
+\let\oldL\L
+\let\oldO\H
+\let\oldS\S
+\let\olda\a
+\let\oldb\b
+\let\oldc\c
+\let\oldd\d
+\let\oldk\k
+\let\oldv\v
+\let\oldl\l
+\let\oldt\t
+\let\oldu\u
+\let\oldP\P
+
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{example}{Example}[chapter]
+\newtheorem{remark}{Remark}[chapter]
+\newtheorem{theorem}{Theorem}[chapter]
+
+
+\newcommand{\wtoc}[1]{%
+\addtocontents{toc}{\protect\vspace*{24pt}
+%{\protect tt \par}
+%\addtocontents{toc}{
+\protect\hspace*{-18pt}{\large\bf#1:}\par
+\vspace*{-7pt}
+%\addtocontents{toc}{\vspace*{-15pt}}%
+}%
+}
+
+\newcommand{\T}{{}^{\mathsf{T}}}
+\newcommand\code[1]{{\tt#1}}
+\newcommand{\rr}[1]{\textcolor{DarkGreen}{\tt #1}}
+
+\newcommand\appChapter[4][e]{\wtoc{#3~#4}\chapter[\ifx#1e\relax#2\else#1\fi]{#2}{%
+\vspace*{12mm}\begin{flushright}{\Large By:\\[4mm]\LARGE\bf\sc #3~#4}\end{flushright}\vspace*{15mm}\index{#4, #3}}}
+\newcommand\introChapter[6][e]{\wtoc{#3~#4}\chapter[\ifx#1e\relax#2\else#1\fi]{#2}{%
+\vspace*{12mm}\begin{flushright}{\Large By:\\[4mm]{\LARGE\bf\sc #3~#4}\\[2mm]and {\LARGE\bf\sc #5~#6}}\end{flushright}\vspace*{15mm}\index{#4, #3}\index{#6, #5}}}
+
+\renewcommand{\chaptermark}[1]{\markboth{{\chaptername\ \thechapter.\ #1}}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection.\ #1}{} }
+
+\input{newCommands}
+
+%\DeclareMathOperator{\Nor}{N} % Normal -
+%\DeclareMathOperator{\FWER}{FWER}
+%\DeclareMathOperator{\FDR}{FDR}
+%\DeclareMathOperator{\FDP}{FDP}
+%\newcommand{\given}{\,\vert\,} % für "X gegeben Y" also $X\given Y$ schreiben
+%
+%\DeclareMathOperator*{\argmin}{argmin}
+%\DeclareMathOperator*{\argmax}{argmax}
+%\DeclareMathOperator{\diag}{diag}
+%\DeclareMathOperator{\diam}{diam}
+%\DeclareMathOperator{\card}{card}
+%\DeclareMathOperator{\cov}{Cov}                   
+%\DeclareMathOperator{\corr}{Corr}                 
+%\DeclareMathOperator{\var}{Var}                   
+%\DeclareMathOperator{\trace}{tr}                  
+%\DeclareMathOperator{\E}{E}                       
+%\DeclareMathOperator{\pred}{p}
+%\DeclareMathOperator{\vect}{vec}                  
+%\DeclareMathOperator{\vech}{vech}                 
+%\DeclareMathOperator{\rank}{rank}                 
+%\DeclareMathOperator{\e}{e}                       
+%\DeclareMathOperator{\GCV}{GCV}                     
+%\DeclareMathOperator{\CV}{CV}                     
+%\DeclareMathOperator{\BLUP}{BLUP}                 
+%\DeclareMathOperator{\MSE}{MSE}                   
+%\DeclareMathOperator{\MS}{MS}                   
+%\DeclareMathOperator{\df}{df}                   
+%\DeclareMathOperator{\bias}{bias}                   
+%\DeclareMathOperator{\eig}{eig}                   
+%\DeclareMathOperator{\Prec}{Prec}
+%\DeclareMathOperator{\mode}{mode}
+%\renewcommand{\d}{\mathsf{\,d}}
+%\newcommand{\ml}{_\text{ML}}
+%
+%\def\arctanh{\qopname\relax o{arctanh}}  % as in amsopn
+%
+%% Kalligraphischer Schriftsatz
+%\newcommand{\cA}{{\cal{A}}}
+%\newcommand{\cB}{{\cal{B}}} 
+%\newcommand{\cC}{{\cal{C}}}
+%\newcommand{\cD}{{\cal{D}}} 
+%\newcommand{\cE}{{\cal{E}}}
+%\newcommand{\cF}{{\cal{F}}}
+%\newcommand{\cG}{{\cal{G}}}
+%\newcommand{\cH}{{\cal{H}}}
+%\newcommand{\cI}{{\cal{I}}}
+%\newcommand{\cJ}{{\cal{J}}}
+%\newcommand{\cK}{{\cal{K}}}
+%\newcommand{\cL}{{\cal{L}}}
+%\newcommand{\cM}{{\cal{M}}} 
+%\newcommand{\cN}{{\cal{N}}}
+%\newcommand{\cO}{{\cal{O}}} 
+%\newcommand{\cP}{{\cal{P}}}
+%\newcommand{\cQ}{{\cal{Q}}} 
+%\newcommand{\cR}{{\cal{R}}} 
+%\newcommand{\cS}{{\cal{S}}} 
+%\newcommand{\cT}{{\cal{T}}}
+%\newcommand{\cU}{{\cal{U}}}
+%\newcommand{\cV}{{\cal{V}}}
+%\newcommand{\cW}{{\cal{W}}}
+%\newcommand{\cX}{{\cal{X}}} 
+%\newcommand{\cY}{{\cal{Y}}}
+%\newcommand{\cZ}{{\cal{Z}}} 
+%
+%
+%\newcommand{\IA}{{\mathbb{A}}}
+%\newcommand{\IB}{{\mathbb{B}}}
+%\newcommand{\IC}{{\mathbb{C}}}
+%\newcommand{\ID}{{\mathbb{D}}}
+%\newcommand{\IE}{{\mathbb{E}}}
+%\newcommand{\IF}{{\mathbb{F}}}
+%\newcommand{\IG}{{\mathbb{G}}}
+%\newcommand{\IH}{{\mathbb{H}}}
+%\newcommand{\II}{{\mathbb{I}}}
+%\newcommand{\IK}{{\mathbb{K}}}
+%\newcommand{\IL}{{\mathbb{L}}}
+%\newcommand{\IM}{{\mathbb{M}}}
+%\newcommand{\IN}{{\mathbb{N}}}
+%\newcommand{\IO}{{\mathbb{O}}}
+%\newcommand{\IP}{{\mathbb{P}}}
+%\newcommand{\IQ}{{\mathbb{Q}}}
+%\newcommand{\IR}{{\mathbb{R}}}
+%\newcommand{\IS}{{\mathbb{S}}}
+%\newcommand{\IT}{{\mathbb{T}}}
+%\newcommand{\IU}{{\mathbb{U}}}
+%\newcommand{\IV}{{\mathbb{V}}}
+%\newcommand{\IW}{{\mathbb{W}}}
+%\newcommand{\IX}{{\mathbb{X}}}
+%\newcommand{\IY}{{\mathbb{Y}}}
+%\newcommand{\IZ}{{\mathbb{Z}}}
+%
+%
+%% fette griechische kleinbuchstaben
+%\newcommand{\balpha}{{\boldsymbol{\alpha}}}
+%\newcommand{\bbeta}{{\boldsymbol{\beta}}}
+%\newcommand{\bgamma}{{\boldsymbol{\gamma}}}
+%\newcommand{\bdelta}{{\boldsymbol{\delta}}}
+%\newcommand{\blambda}{{\boldsymbol{\lambda}}}
+%\newcommand{\bepsilon}{{\boldsymbol{\epsilon}}}
+%\newcommand{\bvarepsilon}{{\boldsymbol{\varepsilon}}}
+%\newcommand{\bzeta}{{\boldsymbol{\zeta}}}
+%\newcommand{\bfeta}{{\boldsymbol{\eta}}}  %  <----- exception !
+%\newcommand{\btheta}{{\boldsymbol{\theta}}{}}
+%\newcommand{\bvartheta}{{\boldsymbol{\vartheta}}}
+%\newcommand{\biota}{{\boldsymbol{\iota}}}
+%\newcommand{\bkappa}{{\boldsymbol{\kappa}}}
+%\newcommand{\bmu}{{\boldsymbol{\mu}}}
+%\newcommand{\bnu}{{\boldsymbol{\nu}}}
+%\newcommand{\bxi}{{\boldsymbol{\xi}}}
+%\newcommand{\bpi}{{\boldsymbol{\pi}}}
+%\newcommand{\bvarpi}{{\boldsymbol{\varpi}}}
+%\newcommand{\brho}{{\boldsymbol{\rho}}}
+%\newcommand{\bvarrhoi}{{\boldsymbol{\varrho}}}
+%\newcommand{\bsigma}{{\boldsymbol{\sigma}}}
+%\newcommand{\bvarsigma}{{\boldsymbol{\varsigma}}}
+%\newcommand{\btau}{{\boldsymbol{\tau}}}
+%\newcommand{\bvartau}{{\boldsymbol{\vartau}}}
+%\newcommand{\bupsilon}{{\boldsymbol{\upsilon}}}
+%\newcommand{\bphi}{{\boldsymbol{\phi}}}
+%\newcommand{\bvarphi}{{\boldsymbol{\varphi}}}
+%\newcommand{\bchi}{{\boldsymbol{\chi}}}
+%\newcommand{\bpsi}{{\boldsymbol{\psi}}}
+%\newcommand{\bomega}{{\boldsymbol{\omega}}}
+%
+%
+%% fette griechische grossbuchstaben
+%\newcommand{\bGamma}{{\boldsymbol{\Gamma}}}
+%\newcommand{\bDelta}{{\boldsymbol{\Delta}}}
+%\newcommand{\bTheta}{{\boldsymbol{\Theta}}}
+%\newcommand{\bLambda}{{\boldsymbol{\Lambda}}{}}
+%\newcommand{\bXi}{{\boldsymbol{\Xi}}}
+%\newcommand{\bPi}{{\boldsymbol{\Pi}}}
+%\newcommand{\bSigma}{{\boldsymbol{\Sigma}}{}}
+%\newcommand{\bUpsilon}{{\boldsymbol{\Upsilon}}{}}
+%\newcommand{\bPhi}{{\boldsymbol{\Phi}}}
+%\newcommand{\bPsi}{{\boldsymbol{\Psi}}}
+%\newcommand{\bOmega}{{\boldsymbol{\Omega}}}
+%
+%% italics griechische grossbuchstaben
+%\newcommand{\itGamma}{{\mathit{\Gamma}}}
+%\newcommand{\itDelta}{{\mathit{\Delta}}}
+%\newcommand{\itTheta}{{\mathit{\Theta}}}
+%\newcommand{\itLambda}{{\mathit{\Lambda}}}
+%\newcommand{\itXi}{{\mathit{\Xi}}}
+%\newcommand{\itPi}{{\mathit{\Pi}}}
+%\newcommand{\itSigma}{{\mathit{\Sigma}}}
+%\newcommand{\itUpsilon}{{\mathit{\Upsilon}}}
+%\newcommand{\itPhi}{{\mathit{\Phi}}}
+%\newcommand{\itPsi}{{\mathit{\Psi}}}
+%\newcommand{\itOmega}{{\mathit{\Omega}}}
+%
+%
+%
+%\newcommand{\A}{{\mathbf{A}}}
+%\newcommand{\B}{{\mathbf{B}}}
+%\newcommand{\C}{{\mathbf{C}}}
+%\newcommand{\D}{{\mathbf{D}}}
+%\newcommand{\bfE}{{\mathbf{E}}}    % \E: expectation
+%\newcommand{\F}{{\mathbf{F}}}
+%\newcommand{\G}{{\mathbf{G}}}
+%\renewcommand{\H}{{\mathbf{H}}}
+%\newcommand{\I}{{\mathbf{I}}}
+%\newcommand{\J}{{\mathbf{J}}}
+%\newcommand{\K}{{\mathbf{K}}}
+%\renewcommand{\L}{{\mathbf{L}}}
+%\newcommand{\bfM}{{\mathbf{M}}}
+%\newcommand{\N}{{\mathbf{N}}}
+%\renewcommand{\O}{{\mathbf{O}}}
+%\renewcommand{\P}{{\mathbf{P}}}  % \Pr : probability
+%\newcommand{\Q}{{\mathbf{Q}}}
+%\newcommand{\bfR}{{\mathbf{R}}}
+%\renewcommand{\S}{{\mathbf{S}}}
+%\newcommand{\bfT}{{\mathbf{T}}} % \T transpose
+%\newcommand{\U}{{\mathbf{U}}}
+%\newcommand{\V}{{\mathbf{V}}}
+%\newcommand{\W}{{\mathbf{W}}}
+%\newcommand{\X}{{\mathbf{X}}}
+%\newcommand{\Y}{{\mathbf{Y}}}
+%\newcommand{\Z}{{\mathbf{Z}}}
+%
+%
+%\newcommand{\0}{{\mathbf{0}}}
+%\newcommand{\1}{{\mathbf{1}}}
+%\newcommand{\2}{{\mathbf{2}}}
+%\newcommand{\3}{{\mathbf{3}}}
+%\newcommand{\4}{{\mathbf{4}}}
+%\newcommand{\5}{{\mathbf{5}}}
+%\newcommand{\6}{{\mathbf{6}}}
+%\newcommand{\7}{{\mathbf{7}}}
+%\newcommand{\8}{{\mathbf{8}}}
+%\newcommand{\9}{{\mathbf{9}}}
+%
+%\renewcommand{\a}{{\textbf{\textit{a}}}}
+%\renewcommand{\b}{{\textbf{\textit{b}}}}
+%\renewcommand{\c}{{\textbf{\textit{c}}}}
+%\newcommand{\bfd}{{\textbf{\textit{d}}}}  % \d  'dx'
+%\newcommand{\bfe}{{\textbf{\textit{e}}}}  % \e  l'exponentiel
+%\newcommand{\f}{{\textbf{\textit{f}}}}
+%\newcommand{\g}{{\textbf{\textit{g}}}}
+%\newcommand{\h}{{\textbf{\textit{h}}}}
+%\newcommand{\bfi}{{\textbf{\textit{i}}}}%\i  complex i, sans 'dot'
+%\newcommand{\bfj}{{\textbf{\textit{j}}}}
+%\renewcommand{\l}{{\textbf{\textit{l}}}}
+%\renewcommand{\k}{{\textbf{\textit{k}}}}
+%\newcommand{\m}{{\textbf{\textit{m}}}}
+%\newcommand{\bfn}{{\textbf{\textit{n}}}}
+%\newcommand{\bfo}{{\textbf{\textit{o}}}}
+%\newcommand{\p}{{\textbf{\textit{p}}}}
+%\newcommand{\q}{{\textbf{\textit{q}}}}
+%\renewcommand{\r}{{\textbf{\textit{r}}}}
+%\newcommand{\s}{{\textbf{\textit{s}}}}
+%\renewcommand{\t}{{\textbf{\textit{t}}}}
+%\newcommand{\bfu}{{\textbf{\textit{u}}}} %\u used in references
+%\renewcommand{\v}{{\textbf{\textit{v}}}}
+%\newcommand{\w}{{\textbf{\textit{w}}}}
+%\newcommand{\x}{{\textbf{\textit{x}}}}
+%\newcommand{\y}{{\textbf{\textit{y}}}}
+\newcommand{\z}{{\textbf{\textit{z}}}}
+%
+%
+%\newcommand{\simiid}{\stackrel[]{\text{iid}}{\sim}}
+%
+%\newcommand*{\stack@relbin}[3][]{%
+%  \mathop{#3}\limits
+%  \toks@{#1}%
+%  \edef\reserved@a{\the\toks@}%
+%  \ifx\reserved@a\@empty\else_{#1}\fi
+%  \toks@{#2}%
+%  \edef\reserved@a{\the\toks@}%
+%  \ifx\reserved@a\@empty\else^{#2}\fi
+%  \egroup
+%}%
+%\renewcommand*{\stackrel}{%
+%  \mathrel\bgroup\stack@relbin
+%}
+%\newcommand*{\stackbin}{%
+%  \mathbin\bgroup\stack@relbin
+%}
+
+
+\ifcsname hlkwd\endcsname%    ... command '#1' exists ...%
+\else%  ... command '#1' does not exist ...%
+
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+
+\usepackage{framed}
+
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\renewenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-0\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-0\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+%\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+\newenvironment{knitrout}{\setlength{\topsep}{0mm}\setlength{\fboxsep}{4mm}}{} 
+
+\usepackage{alltt}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+
+  \fi%
+\usepackage{makeidx}
+\makeatletter
+\def \theindex{%
+    \@makeschapterhead{Contributor Index}%
+    \@mkboth{Contributor Index}{Contributor Index}%
+    \addcontentsline{toc}{chapter}{\bfseries{Contributor Index}}
+    \thispagestyle{plain}%
+    \parindent = \z@
+    \parskip = \z@ plus .3pt\relax
+    \let \item = \@idxitem
+}%
+
+%\def \printindex{%
+%  \bgroup \renewenvironment{theindex}%
+%  {\begin{theindex}%The following gives a short description of the video, including a link.\\
+%}{\end{theindex}}%
+%  \@input {script.ind}%
+%  \egroup }%
+
+\makeindex
+
+\makeatother

@@ -1,0 +1,19 @@
+job1: 
+  #   script: "pdflatex -output-directory output notebook_installation.tex" 
+  #   script:    "make "     
+  script:  
+    - Rscript -e "library(knitr); knitr::knit('chapter01.Rnw')"
+    - Rscript -e "library(knitr); knitr::knit('chapter02.Rnw')"
+    - Rscript -e "library(knitr); knitr::knit('chapter03.Rnw')"
+    - Rscript -e "library(knitr); knitr::knit('chapter04.Rnw')"
+    - Rscript -e "library(knitr); knitr::knit('chapter05.Rnw')"
+    - Rscript -e "library(knitr); knitr::knit('chapter06.Rnw')"
+    - Rscript -e "library(knitr); knitr::knit('chapter07.Rnw')"
+    - Rscript -e "library(knitr); knitr::knit('chapter08.Rnw')"
+    - Rscript -e "library(knitr); knitr::knit('chapter09.Rnw')"
+    - Rscript -e "library(knitr); knitr::knit('script.Rnw')"
+    - latexmk -bibtex -synctex=1 -pdf  -use-make -halt-on-error -pdflatex="pdflatex" -silent script.tex
+
+  artifacts:     
+     paths:   
+       - "*.pdf"

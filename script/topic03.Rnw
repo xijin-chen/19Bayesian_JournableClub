@@ -1,0 +1,361 @@
+% LaTeX file for Application Chapter 03
+<<'preamble03',include=FALSE>>=
+library(knitr)
+opts_chunk$set(
+    fig.path='figure/ch03_fig', 
+    self.contained=FALSE,
+    cache=TRUE, 
+    warning=FALSE, 
+    message=FALSE, 
+    error=FALSE
+) 
+library(xtable) 
+@
+
+\appChapter{The Bayesian Approach III}{Manja}{Deforth}
+% Simply start typing below....
+\section{Multiplicity, Exchangeability and Hierarchical Models}
+When we want to infer more than one parameter ($\theta_{1}$, $\dots$, $\theta_{k}$, measured on K units), three different assumptions exist: 
+\begin{itemize}
+\item[--] \textit{Identical parameters (pooled effect)}: The $\theta$s are identical, the individual units could be ignored and the $\theta$s could be pooled.
+\item[--] \textit{Independent parameters (fixed effect)}: The $\theta$s are unrelated. The result from each unit could be analysed independently (e.g. using a fully specified prior distribution within each unit).
+\item[--] \textit{Exchangeable parameters (hierarchical, multi-level or random-effects model)}: The $\theta$s are drawn at random from some population distribution. In a Bayesian approach, all units would be integrated into a single model. The model has the assumption that the $\theta$s are drawn from some common prior distribution whose parameters are unknown. 
+\end{itemize}
+
+For illustration, let us look at an example of a meta-analysis \citep{Higgins:Spiegelhalter:2002}. The aim of the meta-analysis was to investigate if intravenous magnesium sulfate has a protective effect after acute myocardial infarction (AMI). Eight studies were included in the meta analysis (Table \ref{table3.2.1}). We assume that the response variable for each trial ($Y_k$) is normally distributed $Y_{k}$ $\sim$ $\Nor(\theta_{k},\,s_{k}^{2})$.
+
+
+<<label=calclogoddsSD, echo=TRUE>>=
+
+## Example meta-analysis:
+
+# Import the data from the meta-analysis
+Trial <- c("Morton", "Rasmussen", "Smith", "Abraham", 
+           "Feldstedt", "Shechter", "Ceremuzynski", "LIMIT-2")
+Magnesium.group.deaths <- c(1, 9, 2, 1, 10, 1, 1, 90)
+Magnesium.group.patients <- c(40, 135, 200, 48, 150, 59, 25, 1159)
+Control.group.deaths <- c(2, 23, 7, 1, 8, 9, 3, 118)
+Control.group.patients <- c(36, 135, 200, 46, 148, 56, 23, 1157)
+
+# Create the data frame
+data <- data.frame(Trial, Magnesium.group.deaths, Magnesium.group.patients, 
+		Control.group.deaths, Control.group.patients)
+
+# Build a 2 by 2 table
+a <- Magnesium.group.deaths
+c <- Magnesium.group.patients - Magnesium.group.deaths
+b <- Control.group.deaths
+d <- Control.group.patients - Control.group.deaths
+
+# Calculate the estimated log odds ratio
+estim.log.odds.ratio <- round(log((a+0.5)*(d+0.5) / (b+0.5)/(c+0.5)),2)
+estim.odds.ratio <- exp(estim.log.odds.ratio)
+
+# Calculate the estimated standard deviation of the estimated log odds ratio
+estim.variance <- 1/(a+0.5) + 1/(b+0.5) + 1/(c+0.5) + 1/(d+0.5)
+estim.sd <- sqrt(estim.variance)
+
+# Calculate the 95 % CI
+CI95_upper <- exp(estim.log.odds.ratio + 1.96 * estim.sd)
+CI95_lower <- exp(estim.log.odds.ratio - 1.96 * estim.sd)
+@
+
+In \textit{identical parameters (pooled effect)} the $\theta$s are equal to a common treatment effect $\mu$. The likelihood of the response $Y_{k}$ is normally distributed $Y_{k}$ $\sim$ $\Nor(\mu,s_{k}^{2})$. Because of $s_{k}^2 = \sigma^2/n_{k}$, we can write 
+$\mu$ $\sim$ $\Nor(0, \sigma^2/n_{0})$.
+Due to the Bayes theorem we get the following "pooled" posterior distribution for the posterior mean ($\mu$)
+\begin{align}
+ \mu \sim \Nor \biggr[\frac{\sum n_k y_k}{n_0+\sum n_k},\frac{\sigma^2}{n_0+\sum n_k}\biggr]. \label{eq3.1.1}
+\end{align}
+In case the prior distribution contributes no observations ($n_{0}$ = 0), the prior distribution on $\mu$ is uniform and the posterior distribution for $\mu$ is equal to
+\begin{align}
+ \mu \sim \Nor \biggr[\frac{\sum n_k y_k}{\sum n_k},\frac{\sigma^2}{\sum n_k}\biggr]. \label{eq3.2.2}
+\end{align}
+Let us transform this into the the original notation ($s_k^2 = \sigma^2/n_k$)
+\begin{align}
+ \mu \sim \Nor \biggr[\frac{\sum y_k/s_k^2}{\sum 1/s_k^2},\frac{1}{\sum 1/s_k^2}\biggr]. \label{eq3.3.3}
+\end{align}
+The pooled estimated $\hat{\mu}$ is the posterior mean.
+
+<<label=PooledPosteriorMean, echo=TRUE>>=
+## Identical parameters: 
+
+# Calculate the effective number of events
+effective.no.events <- 4/estim.variance
+
+# True treatment effect for identical parameters
+# Pooled posterior mean
+library(bayesianBiostatUZH)
+mu.pooled <- pooled_posterior_mean(y_k = estim.log.odds.ratio, s_k=estim.sd)
+OR.pooled <- exp(mu.pooled)
+
+
+## OR calculation without the bayesianBiostatUZH package: 
+# mu.pooled <- sum(estim.log.odds.ratio/estim.sd^2)/sum(1/estim.sd^2)
+
+# Pooled posterior variance
+sd.pooled <- pooled_posterior_sd(s_k = estim.sd)
+
+# OR calculation without the bayesianBiostatUZH package: 
+# variance.pooled <- 1/sum(1/estim.sd^2)
+# sd.pooled <- sqrt(variance.pooled)
+
+# Calculation of the 95 % CI of the pooled OR
+CI95_upper_pooled <- exp(mu.pooled + 1.96 * sd.pooled)
+CI95_lower_pooled <- exp(mu.pooled - 1.96 * sd.pooled)
+@
+
+
+But, is the assumption that the trials are measured on the same quantity reasonable? We can test the \textit{heterogeneity} with the following formulas: 
+\begin{align}
+Q = \sum\frac{n_k}{\sigma^2}(y_k - \hat{\mu})^2 \label{eq3.4.1} \\
+Q = \frac{\sum(y_k - \hat{\mu})^2}{s_k^2} \label{eq3.5.1}
+\end{align}
+
+<<label=heterogeneity, echo=TRUE>>=
+# Test for heterogeneity
+Q <- sum((estim.log.odds.ratio - mu.pooled)^2/estim.sd^2)
+
+# P-value
+p_value <- 1 - pchisq(Q, 7)
+@
+
+Q is is under the null hypothesis of homogeneity $\chi_{K-1}^2$ distributed. Nevertheless, this test is not very powerful, meaning if Q is not significant the trials are not necessarily homogeneous. Q is equal to \Sexpr{format(Q, digits = 3)} (\Sexpr{length(data$Trial) - 1} degrees of freedom, $p$-value = \Sexpr{format(p_value, digits = 2)}) in the example of the meta-analysis. 
+
+Within the assumption of \textit{independent parameters (fixed effects)} a uniform prior for each $\theta_k$ is assumed. The posterior distribution is given by the normalized likelihood: 
+\begin{align}
+\theta_k \sim \Nor[y_k, s_k^2]. \label{eq3.6}
+\end{align}
+
+In \textit{exchangeable parameters (random effects)} the $\theta_{k}$ are exchangeable and normally distributed with the "hyperparameters" $\mu$ and $\tau$
+\begin{align}
+\theta_k \sim \Nor[\mu, \tau^2]. 
+\end{align} 
+The pooled result is a special case of $\tau^2$ equal to 0. The independent result is a special case of $\tau^2$ equal to $\infty$. The Bayes theorem is equal to 
+\begin{align}
+\theta_k  \given  y_k \sim \Nor[B_k \mu + (1-B_k)y_k, (1-B_k)s_k^2] \label{eq3.8.1},
+\end{align}
+with $B_k = s_k^2/(s_k^2 + \tau^2)$. $B_k$ is the weight or the shrinkage coefficient which is given to the prior mean. Due to the shrinkage coefficient, the intervals are narrower in exchangeable parameters compared to independent parameters (Figure \ref{forestplot.ch3}). 
+
+
+<<label=ExchangeableStudies, echo=TRUE>>=
+## Exchangeable parameters: 
+
+# Calculate the Shrinkage coefficiant
+Shrinkage <- estim.variance/(estim.variance + 0.29^2)
+
+# Calculation of the mean for each exchangeable studies (random effects): 
+estim.log.odds_exchangeable <- Shrinkage * mu.pooled + 
+    (1 - Shrinkage) * estim.log.odds.ratio
+estim.odds_exchangeable <- exp(estim.log.odds_exchangeable)
+
+# Calculation of the sd for each exchangeable studies (random effects): 
+estim.var_exchangeable <- (1 - Shrinkage) * estim.variance
+estim.sd_exchangeable <- sqrt(estim.var_exchangeable)
+
+# 95 % CI exchangeable parameters
+CI95_upper_ex <- exp(estim.log.odds_exchangeable + 1.96 * estim.sd_exchangeable)
+CI95_lower_ex <- exp(estim.log.odds_exchangeable - 1.96 * estim.sd_exchangeable)
+
+# Typical population OR for exchangeable parameters
+# Pooled posterior mean
+mu.exchangeable <- sum(estim.log.odds.ratio/estim.sd_exchangeable^2)/
+    sum(1/estim.sd_exchangeable^2)
+OR.exchangeable <- exp(mu.exchangeable)
+
+# Pooled posterior variance
+variance.exchangeable <- 1/sum(1/estim.sd_exchangeable^2)
+sd.exchangeable <- sqrt(variance.exchangeable)
+
+# 95 % CI Typical population OR for eschangeable parameters
+CI95_mean_upper_ex <- exp(mu.exchangeable + 1.96 * sd.exchangeable)
+CI95_mean_lower_ex <- exp(mu.exchangeable - 1.96 * sd.exchangeable)
+@
+
+
+<<DataTable, results='asis', echo=FALSE>>=
+## Table 3.1: 
+table <- data.frame(Trial, Magnesium.group.deaths, Magnesium.group.patients, 
+                    Control.group.deaths, Control.group.patients, 
+                    estim.log.odds.ratio, 
+                    estim.sd, effective.no.events, Shrinkage)
+table <- format(table, digits=2) 
+
+colnames(table) <- c("Trial", "Magnesium group Deaths", 
+                     "Magnesium group Patients",  "Control group Deaths", 
+                     "Control group Patients", "Estim. log(OR) $y_k$", 
+                     "Estim. SD $s_k$", "Effected num. events $n_k$", 
+                     "Shrinkage coefficient $B_k$")
+
+print(xtable(table, 
+             align = "lp{2.0cm}p{1.6cm}p{1.8cm}p{1.2cm}p{1.4cm}p{1.4cm}p{0.9cm}p{1.2cm}p{1.6cm}", 
+             caption = "Data for the magnesium meta-analysis ($\\hat{\\tau}$ is equal to 0.29).", 
+             label = "table3.2.1"), 
+      floating = TRUE, type = "latex",
+      sanitize.text.function = function(x) {x}, 
+      include.colnames = TRUE, 
+      include.rownames = FALSE, auto = FALSE,
+      caption.placement = "top", size="\\fontsize{10pt}{10pt}\\selectfont")
+@
+
+\begin{figure}[H]
+\begin{center}
+<<label=plot_meta, echo=FALSE, results='asis'>>=
+## Figure 3.1:
+par(mar=c(4.1,7,4.1,2.1), las = 1)
+library(gplots)
+gplots::plotCI(y=1:8, x = estim.log.odds.ratio,
+li= log(CI95_lower) , ui = log(CI95_upper) , err="x",
+ylab="", xlab="Mortality log(odds ratios)", 
+pch=19, xlim=c(-3,2), ylim = c(10,1), yaxt='n')
+
+par(new=T)
+plotCI(y=(1:8)+0.3, x = estim.log.odds_exchangeable,
+	li= log(CI95_lower_ex), ui = log(CI95_upper_ex), err="x",
+	ylab="", xlab="", pch=19, xlim=c(-3,2), 
+	ylim = c(10,1), yaxt='n', col = "black", lty=3)
+
+par(new=T)
+gplots::plotCI(y=9, x = log(OR.pooled),
+	li= log(CI95_lower_pooled), ui = log(CI95_upper_pooled) , err="x",
+	ylab="", xlab="Mortality log(odds ratios)", pch=19, 
+	xlim=c(-3,2), ylim = c(10,1), yaxt='n')
+
+par(new=T)
+plotCI(y=9+0.3, x = log(OR.exchangeable), 
+	li= log(CI95_mean_lower_ex), ui = log(CI95_mean_upper_ex), err="x",
+	ylab="", xlab="", pch=19, 
+	xlim=c(-3,2), ylim = c(10,1), yaxt='n', col = "black", lty=3)
+
+abline(v=0, lty=2, col = "black")
+op <- par(cex = 0.7)
+axis(2, 1:9, c("Morton", "Rasmussen", "Smith", "Abraham", 
+               "Feldstedt", "Shechter", "Ceremuzynski", 
+               "LIMIT-2", "'Typical' \n Population"))
+legend("bottomleft", 
+legend=c("Independent parameters (fixed effects)", 
+				 "Exchangeable parameters (random effects)"),
+col=c("black", "black"), lty=c(1, 3), cex=1, bg="white")
+@
+\caption{Forest plot with fixed- and random- effects.}
+\label{forestplot.ch3}
+\end{center}
+\end{figure}
+
+\section{Dealing with Nuisance Parameters}
+Nuisance parameters have an influence on the data. Usually, the nuisance parameters (e.g. baseline event rates in control groups) are unknown and not of primary interest. In traditional statistical methods the nuisance parameters are estimated (point estimation). However, the uncertainty of the point estimation is not estimated. In a Bayesian setting, the likelihood p($y \given \theta$, $\psi$) features a set of nuisance parameters $\psi$ and the uncertainty of the estimation of the nuisance parameters will be taken into account as follows:
+
+\begin{enumerate}
+\item  Assess a joint prior distribution p($\theta$, $\psi$) over the nuisance parameters.
+\item Form the joint posterior p($\theta$, $\psi \given y$) $\propto$ p($y \given \theta$, $\psi$) $\times$ p($\theta$,$\psi$) over all the unknown quantities in the model.
+\item Integrate out the nuisance parameters to get the marginal posterior of interest $$p(\theta \given y) = \int p(\theta, \psi \given y) d\psi$$
+\end{enumerate}
+
+The goal of \textit{the sensitivity analysis} of prior distributions placed on nuisance parameters is to detect the influence of prior distribution on nuisance parameters on the marginal posterior.
+
+\section{Computational Issues}
+The computations of a Bayesian model could be complicated (e.g. integration of non standard prior distributions or of models with additional nuisance parameters), but could be solved with computers by simulations. 
+
+\section{Monte Carlo Methods}
+In Monte Carlo methods simulations are used for the computations of integrals or sums. For example: You toss a fair coin 10 times and are interested in the probability of getting 8 or more heads. In an algebraic approach you would use a Binomial distribution. For 8, 9 or 10 heads you get a probability of:
+\begin{equation} \label{eq10}
+\Pr(\mbox{8\ or\ more\ head}) = \binom{10}{8} \cdot \biggr(\frac{1}{2}\biggr)^8 \cdot \biggr(\frac{1}{2}\biggr)^2 + \binom{10}{9} \cdot \biggr(\frac{1}{2}\biggr)^9 \cdot \biggr(\frac{1}{2}\biggr) + \binom{10}{10} \cdot \biggr(\frac{1}{2}\biggr)^{10} = 0.0547.
+\end{equation}
+In a simulation approach you would simulate a set of 10 coins by generating a random number U of 0 and 1 with a computer program. Head is declared by U equal to 1. You count the proportion of throws with eight or more heads. You repeat this several times. The higher the number of simulations, the closer the approximate value gets to the true value of 0.0547 (Figure \ref{plot:Simulation}). 
+
+<<label=Simulation, echo=TRUE, out.extra='trim={2 4.5cm 2 5cm},clip'>>=
+## True distribution vs. simulations: 
+
+# True distribution
+set.seed(2019)
+par(mfrow=c(1,4))
+x = 0:10
+p = dbinom(x, 10, 0.5)
+
+# Sample with 100 throws
+sample.100 <- replicate(100, sample(c(1,0), 10, 
+	prob = c(0.5, 0.5), replace = TRUE))  # head = 1
+no.head.100 <- apply(sample.100, 2, sum)
+
+# Sample with 1000 throws
+sample.1000 <- replicate(1000, sample(c(1,0), 10, 
+	prob = c(0.5, 0.5), replace = TRUE))  # head = 1
+no.head.1000 <- apply(sample.1000, 2, sum)
+
+# Sample with 10000 throws
+sample.10000 <- replicate(10000, sample(c(1,0), 10, 
+	prob = c(0.5, 0.5), replace = TRUE))  # head = 1
+no.head.10000 <- apply(sample.10000, 2, sum)
+@
+
+
+\begin{figure}[H]
+<<label=Simulation.plot, echo=FALSE>>=
+## Figure 3.2:
+par(mfrow=c(2,2), las=1)
+plot(x, p, type = "h", main = "True distribution", 
+	xlab = "number of heads", ylab="probability", frame.plot=FALSE, 
+	ylim=c(0, 0.275))
+hist(no.head.100, probability = T, main = "100 throws", 
+	xlab = "number of heads", ylab="probability", 
+	breaks=seq(-.5, 11.5, 1), ylim=c(0, 0.275))
+hist(no.head.1000, probability = T, main = "1000 throws", 
+	xlab = "number of heads", ylab="probability", 
+	breaks=seq(-.5, 11.5, 1), ylim=c(0, 0.275))
+hist(no.head.10000, probability = T, main = "10000 throws", 
+	xlab = "number of heads", ylab="probability", 
+	breaks=seq(-.5, 11.5, 1), ylim=c(0, 0.275))
+@
+
+\caption{The true distribution based on the binomial distribution compared to computer simulations with 100, 1000 and 10000 throws.}
+\label{plot:Simulation}
+\end{figure}
+This method will be used frequently in risk modelling. It allows sampling from a wide variety of distributions. 
+If the distribution of concern (the prior if no data are available, or the current posterior) is a member of a known family, the Monte Carlo methods could be used for Bayesian analysis. In conjugate Bayesian analysis it is also possible to find the posterior distribution algebraically and to find the distribution of complex functions of one or more unknown quantities. 
+
+\section{Markov Chain Monte Carlo Methods}
+
+It is not always possible to find the posterior distribution in an algebraic form (e.g. in case of non-conjugate distributions or nuisance parameters). In such a case the \textit {Markov Chain Monte Carlo (MCMC) methods} are very effective. The posterior distribution of interest could be sampled even when the form of that posterior has no known algebraic form.
+
+A short overview about the Markov chain Monte Carlo methods: 
+\begin{enumerate}
+\item \textit{Replacing analytic methods by simulation}: Assume you have some data y and you want to make inferences about a parameter $\theta$ (e.g. average treatment effect in a meta-analysis). The Markov chain Monte Carlo methods sample from the joint posterior p($\theta$, $\psi \given y$), and save a large number of plausible values for $\theta$ and $\psi$. Based on the sampled plausible values you could make inferences about $\theta$. If you want to estimate the shape of the posterior distribution p($\theta \given y$) you could plot a histogram of all the sampled plausible values for $\theta$.
+
+\item \textit{Sampling from the posterior distribution}: By sampling from a joint posterior distribution a Markov chain will be produced. In a Markov chain, the distribution for the next simulated value $(\theta^{j+1}, \psi^{j+1})$ depends only on the current value ($\theta^{j}$, $\psi^{j}$). With some algorithms (e.g. Gibbs sampling and Metropolis algorithm) the sample will eventually converge into an "equilibrium distribution", which is the posterior of interest.  
+
+\item \textit{Starting the simulation}: The Markov chain start with initial values (selected for the unknown parameters). It is important to choose reasonable initial values to avoid numerical problems and to improve convergence. 
+
+\item \textit{Checking convergence}: How can we check if a Markov chain (possibly with many dimensions) has coverged to its equilibrium distribution? Choose different initial values and run a chain for each initial value. You can assume that it is the posterior of interest if the chains end up, the chance variability is as expected and the chance variability comes from the same equilibrium (or a stationary distribution).
+\end{enumerate}
+Usually a hand-tailored sampling program is needed for the Markov chain Monte Carlo analysis.
+
+\section{Software for Marco Chain Monte Carlo Analysis}
+WinBUGS (BUGS = Bayesian Inference Using Gibbs Sampling) runs on Windows operating systems. OpenBUGS, an open source alternative, runs on Windows, Mac and Linux operating systems. WinBUGS and OpenBUGS are samplers, which are used for the Bayesian analysis using Markov chain Monte Carlo methods. It is possible to run WinBUGS or OpenBUGS from R. 
+
+\section{Schools of Bayesian}
+Generally speaking four different Bayesian methods exist: the empirical, the reference, the proper and the decision-theoretic (or "full") Bayes approach. 
+\begin{itemize}
+\item[--] \textit{Empirical Bayes approach}. In the empirical Bayes approach the parameters of the prior distribution are estimated from the data. 
+\item[--] \textit{Reference Bayes approach}. The idea of the reference Bayes approach is to use "non-informative" prior distributions. 
+\item[--] \textit{Proper Bayes approach}: In the proper Bayes approach informative prior distributions are used. This book focuses on the proper school of Bayesianism. 
+\item[--] \textit{Decision-theoretic approach or "full" Bayes approach}: Decisions are made based on maximizing expected utility. 
+\end{itemize}
+
+\section{A Bayesian Checklist}
+The following Bayesian guideline was given by \cite{Lang:Secic:1997}: 
+\begin{enumerate}
+\item Report the pre-trial probabilities and specify how they were determined. 
+\item Report the post-trial probabilities and their probability intervals. 
+\item Interpret the post-trial probabilities.
+\end{enumerate}
+
+The goal of the report is that another researcher could replicated the data analysis. Therefore the following points should be mentioned in the report: 
+
+\begin{itemize}
+\item[--] \textit{Background}: Intervention (e.g. study population) and aim of study (make a difference between desired inferences, prior distribution, recommendations for actions, loss or utility function).
+
+\item[--] \textit{Methods}: Study design, outcome measure, statistical model, prospective Bayesian analysis (mention if the prior and loss functions were constructed preceding the data collection), prior distribution(s) for the parameters of interest, loss function or demands (describe any elicitation process), computation/software (if Markov chain Monte Carlo methods were used, justify the assumption of convergence).
+
+\item[--] \textit{Results}: Evidence from study (e.g. sample sizes, measurements taken). Make sure that the Likelihood is reproducible.
+
+\item[--] \textit{Interpretation}: Bayesian interpretation (summarize the posterior distribution and posterior credible intervals, results of the loss function), sensitivity analysis, comments in regard to strengths and weakness of the analysis.
+\end{itemize}

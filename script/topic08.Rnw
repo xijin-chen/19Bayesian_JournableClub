@@ -1,0 +1,745 @@
+% LaTeX file for Application Chapter 08
+
+<<'preamble08',include=FALSE>>=
+library(knitr)
+library(xtable)
+opts_chunk$set(
+    fig.path='figure/ch08_fig', 
+    self.contained=FALSE,
+    cache=TRUE,
+    error = FALSE,
+    warning = FALSE,
+    message = FALSE
+) 
+@
+
+
+\appChapter{RCTs III: Historical controls}{Mei Yee}{Ng}
+% Simply start typing below....
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%% Chapter 6.7 %%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section {The role of 'secpticism' in confirmatory studies}
+Once a clinical trial has been conducted and the analysed results have shown a significant positive result for the new therapy, investigators speculate whether the result is indeed significant or just per chance. \citet{fletcher1993implications}, suggest the results from the first trial should be treated with scepticism. Reasons for this sceptism can stem from prior knowledge about the therapies, the method the trial was conducted or the interpretation of the results.
+
+A confirmatory randomised clinical trial aims to assess whether a treatment effect observed in previous randomised trials is indeed evident and also the significance.
+
+A Bayesian framework  allows differences in interpretation to be analysed by introducing a sceptical prior i.e. treatment effect of zero. This sceptical prior deals with regression to the mean whereby the initial measurements collected show extreme values but subsequent measurements tend towards the mean. \newline
+
+\begin{example} \label{Ex6.8}
+CALGB: Assessing whether to perform a confirmatory randomised trial
+
+\subsection*{Reference}
+\citet{parmar1996assessing}, \citet{dillman1990randomized}
+
+\subsection*{Background}
+A RCT conduccted by the Cancer and Leukemia Group B (CALGB) between 1984 - 1987 with the aim to enroll 240 patients to observe approximately 190 deaths.Patients were subject to strict inclusion criteria e.g. disease in stage, maximum amount of weight loss, previous chemotherapy/ radiotherapy. To ensure a balanced distribution between treatment groups, patients were stratified based on histologic type (the type of tissue in which the cancer originates).
+
+Objectives: The study was designed to detect a hazard ratio of 0.67 with 80\% power and 5\% significance level. Secondary objectives included assessing the length of failure free survival, toxicity of the treatment and rates of tumour regression.
+
+Method of analysis: Interim assessments were planned for twice a year and a truncated O'Brien-Flemming sequential boundary was used for the multiple sequential interim analyses.
+
+Results: The trial was stopped early with 156 patients enrolled and a p-value of 0.0066 was calculated (p-value adjusted for covariates was 0.0075). From the results, The expected number of deaths was calculated to be 120 deaths, which is a substantial improvement.
+
+\subsection*{Aim}
+To compare chemotherapy plus radiotherapy with radiotherapy alone, in patients with locally advanced non-small cell lung cancer.
+
+\subsection*{Background}
+Between 1984 and 1987, a RCT was conducted by the Cancer and Leukemia Group B (CALGB). They enrolled 240 patients to detect with 80\% power and 5\% significance level, a log(hazard ratio) of  $\theta_A$=$(\z_{0.8}-\z_{0.025})$ $\sigma$/$\sqrt(n)$ i.e. $\theta_A=0.405$ where $\sigma$=2. The trial was stopped early - enrolling 156n patients and showed a log hazard ratio of -0.489 i.e. a hazard ratio of $\exp(-0.489)$=$\Sexpr{round(exp(-0.489),2)}$.
+
+\subsection*{Study Design}
+The National Cancer Insitute (NCI), based on previous experience, were not convinced by these significant results. A Bayesian analysis was carried out retrospectively using a sceptical prior centred at zero with 5\% probability of exceeding $\theta_A$ = -0.405. The results were as follows:
+\todo{use R chunk and xtable} %no idea how to merge rows/columns using xtable
+\begin{center}
+\begin{tabular}{ |l|c|c| }
+\hline
+ Results using sceptical prior & Estimate of improvement & 95\% confidence interval \\
+ \hline\hline
+ Median improvement in survival (months) & 3.7 & 0.3 to 8.4\\
+ 2 year survival improvement (\%) & 10 & 0 to 20 \\
+ Hazard ratio & 0.73 & 0.55 to 0.97\\
+ \hline
+\end{tabular}
+\end{center}
+
+\ref{fig:sceptical} shows the sceptical prior with mean 0 and standard deviation 0.246, the posterior distrbution based on a sceptical prior and the likelihood from the 1984 - 1987 study. As evident from the \ref{fig:sceptical}, the posterior distribution lies between the prior distribution and the likelihood with mean 0.73.
+
+
+\todo{where do some of these number come from, e.g. 0.61?} %from the book
+\todo{e.g. compute posterior distribution with functions from the package} %not convinced by the function in the package. chose the results from the book
+\begin{figure}[!h]
+    \caption{\label{fig:sceptical} Comparison of the prior, likelihood and postior distributions}
+<<echo=FALSE, results='hide',fig.height=4>>=
+HR <- log(1.5)
+sd <- HR/qnorm(0.95)
+x <- seq(0.4,1.3,length=100)
+
+prior.y <- dnorm(x,mean = 1,sd = sd)
+likelihood.y <- dnorm(x,mean = 0.61,sd = 0.185)
+post.y <- dnorm(x,mean = 0.73,sd = 0.147)
+
+plot(x,prior.y, type = "l",lty = 1, log = "x", main = "Posterior distribution using a sceptical prior",
+     xlab = "Hazard Ratio", ylab = "", yaxt="n",xlim=c(0.4,1.2), 
+     ylim = c(0,3.5))
+lines(x,likelihood.y,type = "l",col = 2)
+lines(x,post.y,type = "l", col = 3)
+abline(v=c(0.67,1), col=c(1,1), lty=c(2,2), lwd=c(1, 1))
+
+legend("topright", lty = 1,legend = c("prior","likelihood","posterior"), 
+       col = c(1:3), bg="white")
+@
+\end{figure}
+
+\begin{figure}[!h]
+<<echo=TRUE, eval = FALSE, results='hide',fig.height=4>>=
+HR <- log(1.5)
+sd <- HR/qnorm(0.95)
+x <- seq(0.4,1.3,length=100)
+theta.A <- 0.67
+
+prior.y <- dnorm(x,mean = 1,sd = sd)
+
+likelihood.y <- dnorm(x,mean = 0.61,sd = 0.185)
+
+post.y <- dnorm(x,mean = 0.73,sd = 0.147)
+
+plot(x,prior.y, type = "l",lty = 1, log = "x",
+     main = "Sceptical vs enthusiastic prior distribution",
+     xlab = "Hazard Ratio", ylab = "", yaxt="n",xlim=c(0.4,1.2), ylim = c(0,3.5))
+lines(x,likelihood.y,type = "l",col = 2)
+lines(x,post.y,type = "l", col = 3)
+abline(v=c(0.67,1), col=c(1,1), lty=c(2,2), lwd=c(1, 1))
+
+legend("topright", lty = 1,legend = c("prior","likelihood","posterior"), col = c(1:3), bg="white")
+@
+\end{figure}
+
+A confirmatory trial was activated in January 1989 using the same design as the 1984 - 1987 study.
+
+\subsection*{Results}
+
+\begin{center}
+\begin{tabular}{ |l|c|c| }
+\hline
+ Results & \multicolumn{2}{c}{Estimate of improvement}\\
+ & 1984 - 1987 study & Confirmatory study\\
+ \hline\hline
+ Median improvement in survival (months) & 6.3 & 2.4\\
+ Hazard ratio & 0.61 & 0.83\\
+ \hline
+\end{tabular}
+\end{center}
+
+\todo{Use Sexpr throughout} % results from the following paragraph were taken from the paper
+In the confirmatory trial  119 deaths occurred in the standard radiotherapy group and 108 deaths in the chemotherapy plus radiotherapy group. The results were significant (HR = 0.83) with a p-value of 0.007. However, the median survival was only 2.4 months, which is closer to the results calculated using the sceptical prior.
+
+\subsection*{Conclusion}
+In both trials, the chemotherapy plus radiotherapy treatment was proven to be the superior treatment (HR $<$ 1). However, the results from the confirmatory trial illustrated that the improvement in survival months was not a large as initially anticiapted - only 2.4 months compared to 6.3 months - and confirmed the sceptics view.
+
+\subsection*{Minimal clinically worthwhile effects}
+Even if there are significant findings of a superior treatment, consideration must be made for toxicity, cost and inconvenience of the new treatment. In this trial, chemotherapy resulted in higher incidences of serious infections requiring hospitalisation. Other side effects of chemotherapy include severe weight loss, nausa and vomiting.
+
+\end{example}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%% Chapter 6.8 %%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section {Multiplicity in randomised trials}
+\subsection{Subset analysis}
+In the context of clinical trials, subset analysis is relevant when estimating treatment effects in subgroups of patients. To calculate the overall treatment effect, a reasonable assumption would be to assign a uniform prior and assume the subgroup-specific deviations have a common prior distribution with zero mean. This leads to:
+\begin{enumerate}
+  \item pooling subgroups if difference among them appear small
+  \item keeping subgroups separate if differences appear large
+  \item providing intermidiate results for intermediate situations \citep{cornfield1976recent}
+\end{enumerate}
+
+\subsection{Multi-centre analysis}
+When analysing data from multi-centre trials, the centre-by-treatment interaction is considered a random effect with some common prior distribution. Various comparisons can be made such as treatment effect between institutions as well as patient treatment effect within institutions. Due to the complexities of multi-centre analyses, Markov chain Monte Carlo techniques are often used e.g. \citet{gould1998multi} who used WinBUGS code.
+
+\subsection{Cluster randomisation}
+Some trials randomise clusters of patients for administrative convenience and because some interventions are applied at a cluster level e.g. grouped by general practioner, education, organisation. \citet{spiegelhalter2001bayesian} used a Bayesian approach to cluster randomisation for continuous reponses and \citet{turner2001bayesian} for binary responses.
+
+\subsection{Multiple endpoints and treatments}
+Mulitple endpoints can be of interest especially when dealing with toxicity and efficacy. These tend to occur in early phase studies and meta-analyses \citep{etzioni1994monitoring,dominici1998testing,thall1998some}. A posterior distribution can be calculated using Bayesian approach and for more complex situations, general random-effects models can be constructed \citep{waller1969bayes,brant1992k}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%% Chapter 6.9 %%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Using historical controls}
+Historical controls are sometimes used alongside current controls as it is wasteful and inefficient to ignore all past information on control groups \citep{pocock1976combination}. This could in turn lead to fewer participants being required in the current control group. However consideration must be made when determining to what extent the historical data can be considered similar to the current data. Some criteria suggested by \citet{pocock1976combination} include:
+\begin{itemize}
+\item same treatment
+\item same eligibility
+\item same evaluation
+\item same basesline characteristics
+\item same organisation and investigators
+\end{itemize}
+Possible approaches include the following:
+\begin{enumerate}
+	\item ignore historical control data - standard option whereby each trial uses only its own control group
+	\item assume historical control groups are exchangeable with the current control group - pool together both historical and current controls
+	\item assume historical controls are a biased sample - the historical control ($\theta_h$) is a function of ($\theta$) with some bias ($\delta_h$) e.g. $\theta_h$ = $\theta$ + $\delta_h$
+	\item discount size of historical group - a weight is applied to the historical controls
+	\item functional dependence - historical controls are completely compatible with the current controls but need to be adjusted for an imbalance in covariates
+	\item assume historical control individuals are exchangeable with those in the current control group - only certain individuals in the historical control group are used and pooled with the current control group
+\end{enumerate}
+
+Below is an example of combining controls when the historical controls are assumed to be a biased sample of the current controls. Let $y_t, y_c$ and $y_h$ be the observed response in the randomised treated, randomised control and historical control respectively.\\
+
+\noindent Treatment distribution
+
+\begin{align}
+y_t \sim \Nor[\theta_t,\sigma_t^2]
+	\label{eq6.21}
+\end{align}
+
+Control distribution
+\begin{align}
+y_c \sim \Nor[\theta_c,\sigma_c^2]
+	\label{eq6.22}
+\end{align}
+
+Historical control distribution
+\begin{align}
+y_h \sim \Nor[\theta_c+\delta,\sigma_h^2]
+	\label{eq6.23}
+\end{align}
+
+Degree of bias
+\begin{align}
+\delta \sim \Nor[0,\sigma_\delta^2]
+	\label{eq6.24}
+\end{align}
+
+Marginal distribution of $y_h$ from equations \ref{eq6.23} and \ref{eq6.24}
+\begin{align}
+y_h \sim \Nor[\theta_c,\sigma_h^2+\sigma_\delta^2]
+	\label{eq6.25}
+\end{align}
+
+Combined likelihood for $\theta_c$ is obtained by weighting the two estimates of $\theta_c$ inversely by their variances
+\begin{align}
+\frac {y_c+Wy_h}{1+W}\sim \Nor\left[\theta_c,\left(\frac{1}{\sigma_c^2}+\frac{1}{\sigma_h^2+\sigma_\delta^2}\right)^{-1}\right]
+	\label{eq6.26}
+\end{align}
+
+where
+\begin{align}
+W=\frac{\sigma_c^2}{\sigma_h^2+\sigma_\delta^2}
+\nonumber
+\end{align}
+
+The likelihood for treatment effect $\theta=\theta_t-\theta_c$ can be obtained from equations \ref{eq6.21} and \ref{eq6.26}
+\begin{align}
+	Y_n > - \frac{1}{\sqrt{n}} z_\epsilon \sigma.
+	\label{eq6.7}
+\end{align}
+
+\begin{example} \label{Ex6.9} ECMO: incorporating historical controls
+
+\subsection*{Reference}
+\citet{ware1989investigating}, \citet{kass1989investigating}
+
+\subsection*{Background}
+Conventional medical therapy (CMT) for treating infants with severe persistent pulmonary hypertension of the newborn (PPHN) was used before the introduction of Extracorporeal membrane oxygenation (ECMO). The mortality rate among infants undergoing CMT was 80\% or higher.
+
+Up until 1985 only 1 RCT had been reported. In that study, babies were randomised into EMCO and CMT therapies via a randomised urn design with replacement i.e a coloured ball representing a treatment was drawn from the urn, the ball was replaced into the urn and if the baby survived, an additional ball representing that treatment would be added to the urn, if the baby did not survive, a ball representing the other treatment would be added to the urn. The study was planned for 10 babies to partake, however due to miscommunication, 12 babies were included in the trial. The first baby was randomised to ECMO and survived. The second baby was randomised to CMT and died. All subsequent babies were randomised to ECMO and survived. This re sulted in a positive restult for ECMO.
+
+Investigators, unconvinced by such a positive result, analysed hospital records between 1982 - 1983 from 2 Harvard hospitals. All babies had been treated under CMT and 11 out of 13 babies died. A further study was designed.
+
+\subsection*{Aim}
+To compare Extracorporeal membrane oxygenation (ECMO) against conventional medical therapy (CMT) in infants with severe persistent pulmonary hypertension of the newborn (PPHN)
+
+\subsection*{Study design}
+The study was an adaptive two-phase RCT conducted at two hospitals at Harvard between 1986 - 1988. Due to the nature of this study, the sample size was planned to stop with at most four deaths. The study would have approximately 77\% power to detect an odds ratio of 1/16 at the 5\% significance level. Phase I would randomise patients to either ECMO or CMT and Phase II would allocate patients to the superior treatment. The randomisation design was random permuted blocks of size 4 and the outcome measured was OR of death  with OR $<$ 1 favouring ECMO.
+
+\subsection*{Prior Distribution}
+Based on \citep{kass1989investigating}, a scepitcal prior centred at zero with 5\% probability of OR $<$ 1/16
+was investigated. In addition, following \citet{ware1989investigating}, prior evidence of survival under CMT was restricted to the cases of severe PPHN treated with CMT in the two Harvard hospitals between 1982 - 1983.
+
+\todo{use R chunks, Sexpr, xtable throughout in Table 8.1 and 8.2} %not sure how to merge rows/columns in xtable - chosen not to use it
+\subsection*{Results}
+The historical data was combined with the observed data (\ref{table:1}) and the bias model on historical data \citep{pocock1976combination} was analysed.
+\begin{table}[h]
+\caption{Historical and observed data for Harvard ECMO study, including estimates and variance of log-odds of death}
+<<echo= FALSE, results='hide'>>=
+a <- c(11.5,0.5,4.5)
+b <- c(13.5,9.5, 10.5)
+c <- c(2.5, 9.5, 6.5)
+d <- c(13.5,9.5, 10.5)
+
+OR <- (a/b)/(c/d)
+OR
+log.OR <- log(OR)
+log.OR
+var <- 1/a+1/c
+var
+@
+
+\label{table:1}
+\begin{center}
+\begin{tabular}{l||p{2.3cm}|p{2.3cm}|c|c|p{3.6cm}}
+\hline
+       Trial & ECMO deaths/ cases & CMT deaths/ cases & Odds & $\log$(odds) & Variance of $\log$(odds)\\
+        \hline\hline
+ Historical data & & 11/13 & \Sexpr{round(OR[1],2)} & \Sexpr{round(log.OR[1],2)}$(y_h)$ & \Sexpr{round(var[1],2)}($\sigma_c^2$) \\
+ \hline
+Harvard phase I & 0/9 &  & \Sexpr{round(OR[2],2)} & \Sexpr{round(log.OR[2],2)}$(y_t)$ & \Sexpr{round(var[2],2)}($\sigma_t^2$)\\
+               &  & 4/10 & \Sexpr{round(OR[3],2)} & \Sexpr{round(log.OR[3],2)}$(y_c)$ & \Sexpr{round(var[3],2)}($\sigma_c^2$)\\
+               \hline
+ \end{tabular}
+ \end{center}
+\end{table}
+
+It is thought that using historical controls could over/ underestimate the odds of death/ Table~\ref{table:2} shows the impact when the bias from historical controls is varied including when the historical controls are not used at all.
+
+
+\begin{table}[h]
+\caption{Varying the historical control bias in assessing odds ratio of death for patients receiving ECMO}
+\label{table:2}
+ \begin{tabular}{l|l|l|p{3cm}|l|l}
+{Potential relative bias ($\delta$)} &{$\sigma_\delta$} &\multicolumn{4}{c}{Posterior distribution of odds ratio} \\
+ &     & {Mean}   & {95\% interval}     & {$\Pr(\mbox{OR} < 1)$}  &{$\Pr(\mbox{OR} < 0.4)$} \\
+       \hline
+0   & 0/000 & 0.033 & 0.0017 to 0.0658 & 98.7\%& 94.9\% \\
+1.1 & 0.048 & 0.033 & 0.0017 to 0.659 & 98.7\% & 94.9\% \\
+1.5 & 0.207 & 0.035 & 0.0017 to 0.686 & 98.6\% & 94.6\% \\
+2   & 0.354 & 0.037 & 0.0018 to 0.741 & 97.7\% & 92.1\% \\
+4   & 0.707 & 0.045 & 0.0022 to 0.929 & 97.1\% & 90.3\% \\
+8   & 1.061 & 0.053 & 0.0025 to 1.113 & 96.8\% & 89.8\% \\
+16  & 1.415 & 0.055 & 0.0026 to 1.166 & 96.7\% & 89.4\% \\
+Not using historical & & 0.076 & 0.0035 to 1.673 & 94.9\% & 85.4\%\\
+\end{tabular}
+\end{table}
+
+The potential relative bias corresponds to the  95\% chance that the odds ratio between the historical and current control lies between $\delta$ and 1/$\delta$.
+
+The posterior distribution of odds ratio is calculated using a sceptical prior distribution with mean 0 and a 5\% probability that the $\log$(OR) is less than -2.77 i.e. a standard deviation of -2.77/-1.64 = 1.69.
+
+When the historical evidence is disregarded, the results are in favour of ECMO with the posterior mean of the odds ratio is 0.076, the posterior probability of ECMO being inferior is 5.1\% and the posterior probability of ECMO not being clinically superior is 14.6\%. In contrast, when treating the historical evidence as exchangeable with the observed controls, the posterior mean of the odds ratio is 0.033 with the probability of ECMO being inferior being 1.3\% and of it not being clinically superior 5.1\%. With a bias of 8 or more, the 95\% posterior interval for the odds ratio includes 1, therefore, no firm conclusion can be made. The choice of bias depends on the circumstances and the extent to which Pocock's criteria are met.
+
+\subsection*{Comments}
+From the discussion of \citet{ware1989investigating}, many comments have been contributed such as: should the historical data have been discounted instead \citep{kass1989investigating}, should more historical data been included \citep{berry1989monitoring}, should the meta-analysis approach have been used where studies are assumed to be exchangeable? \citet{berry1989monitoring} even state that it was unethical to randomise the patients and the trail should never have been started. However, \citet{begg1989investigating} has an opposing viewing stating the trial was stopped too early.
+\end{example}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%% Chapter 6.10 %%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Data-dependent allocation}
+Data-dependent allocation aims to minimise the number of patients recieving inferior treatment as the trial proceeds. This adaptive approach aims to satisfy ethical considerations for patients partaking in the study and is useful in trials with many arms. However, certain criteria must be met:
+\begin{enumerate}
+  \item Responses have to be observed without delay
+  \item Adaption depends on a one-dimensional response
+  \item Sample sizes may have to be bigger
+  \item Patients may not be homogeneous throughout the trial
+	\item Clinicians may be unhappy with adaptive randomisation
+	\item Informed consent may be more difficult to obtain
+	\item The trial will be complex and may deter recruitment
+	\item Estimation of the treatment contrast will lose efficiency
+	\item Potential inflation of Type I error
+	\item Treatment assignments may be biased
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%% Chapter 6.11 %%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Trial designs other than two parallel groups}
+\subsection{Equivalence trials}
+The aim of equivalence trials is to show that difference between the posterior probabilities calculated from two treatments are equivalent within a defined range - usually 95\% or 90\%.
+\subsection{Crossover trials}
+In a crossover trial, each patient is given two or more treatments in an order selected at random with a washout period between treatments.
+\subsection{N-of-1 trials}
+N-of-1 trials can be thought of as a within-person crossover trials. Each participant is given two or more treatments per treatment period and will undergo multiple treatment periods. A so called meta analysis can be performed by combining the results from all patients in the N-of-1 trial. It can be assumed that patients are exchangeable. These trials may be appropriate for testing treatments for chronic conditions where short-term symptom reliefs is of interest.
+\subsection{Factorial designs}
+In facotrial designs, multiple treatments are given to patients simultaneously in a structured design.\\
+
+\begin{example} \label{Ex6.10} N of 1: pooling individual response studies
+
+\subsection*{Reference}
+\citet{zucker1997combining}
+
+\subsection*{Aim} 
+Compare amitriptyline against placebo for patients with fibromyalgia and evaluate individual patient responses.
+
+\subsection*{Study design}
+An N-of-1 study was performed in 23 patients with fibromyalgia. Each patient was subject to between 3 and 6 treatment periods with a washout period in between. Within each treatment period, both amitriptyline and placebo were administered but in a random order. Patients were given a symptom questionnaire after each treatment/ placebo and the difference in the scores was calculated. The higher the scores indicated fewer negative symptoms. The trials were carried out by a single physician at a single centre
+
+\subsection*{Statistical model}
+A hierarchical Bayesian method was used to combine the results from the individual patients to obatin a posterior estimate of the population, the individual patient treatment effects and the between patient variation.
+
+\begin{flushleft}If $y_{kj}$ is the $j$th measurement on the $k$th individual, we assume:\end{flushleft}
+\begin{equation}
+y_{kj} \sim \Nor[\theta_k,\sigma_k^2]
+\end{equation}
+
+\begin{flushleft}We also assume the $\theta_k$'s and $\sigma_k^2$'s are exchangeable and have the following distributions\end{flushleft}
+\begin{equation}
+\theta_k \sim \Nor[\mu_\theta,\tau_\theta^2]
+\end{equation}
+\begin{equation}
+\log(\sigma_k^2) \sim \Nor[\mu_\sigma,\tau_\sigma^2]
+\end{equation}
+
+\begin{flushleft}Prior distribution:\end{flushleft}
+\begin{itemize}
+  \item Independence model: In order to reproduce the classical analysis, we assume each $\theta_k$ has a uniform distribution and hach $\sigma_k^{-2}$ has a Gamma [0.001,0.001] distribution. This is equivalent to each $\log(\sigma_k^2)$ having uniform distribution.
+  \item Exchangeable model: adopt uniform priors for $\mu_\theta$, $\tau_\theta$, $\mu_\sigma$ and $\tau_\sigma$. Other prior distributions for the between-individual variation $\tau_\theta$ are considered as part of a sensitivity analysis.
+\end{itemize}
+
+\subsection*{Computation/software}
+JAGS (Just another Gibbs sampler)
+
+\subsection*{Results}
+The outcome was defined as the difference in the disease status measurement score obtained on amitriptyline minues the score obtained on placebo. A positive number represents improved disease status on smitriptyline.
+
+From the raw data displayed in \ref{fig:1}, it is clear that there is substantial variability in the reponse and between patients. For seven out of 23 patients, a positve difference of treatment score was calculated in all periods. Despite the huge range in treatment difference scores, the mean overall population treatment difference was calculated to be 0.42. However, the change of this result being important ($\mu_\theta > 0.5$ is only 29\%)
+
+\todo{put raw data into package} %no idea how to do that
+
+\begin{figure}[h!]
+  \caption{Raw data from N-of-1 clinical trials on 23 patients, each dot represents the differencec in responses in a single period}
+  \label{fig:1}
+
+<<echo=FALSE,error=FALSE,warning=FALSE,message=FALSE>>=
+Nof1 <- data.frame("ID" = 1:23,
+                   "dose" = c(10,10,10,10,50,10,50,10,10,10,10,25,5,20,20,10,25,10,50,20,10,10,25),
+                   "n" = c(3,3,3,3,3,3,3,3,3,3,4,6,3,4,3,4,4,3,4,3,3,3,3),
+                   "y[,1]" = c(-0.43,0.35,0.07,0.29,0.57,0.08,-0.36,-0.21,0.68,-0.64,0.05,0.64,-0.29,4.29,0.64,1.22,-0.08,1.85,0.86,0.86,1.35,0.47,0.42),
+                   "y[,2]" = c(-0.64,-2,-0.07,-1.42,-2.57,0.43,-0.14,1.28,-0.25,1,-0.22,1.08,1.08,3.15,0,1.07,0.86,0.78,1.43,1.39,1.36,0.93,0.71),
+                   "y[,3]" = c(0,-0.92,0.15,0.14,-1.07,-1.07,0.64,-1.5,-0.09,-0.29,0.57,-0.36,1.5,0.78,0.5,-0.08,1.07,0.54,0.65,1.85,0.79,0.86,0.66),
+                   "y[,4]" = c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.36,0.79,NA,4.49,NA,0.5,1.15,NA,1.86,NA,NA,NA,NA),
+                   "y[,5]" = c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,-0.64,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA),
+                   "y[,6]" = c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,1.5,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA),
+                   stringsAsFactors = FALSE)
+Y <- Nof1[,4:9]
+nr <- dim(Y)[1] # number of rows in data
+nc <- dim(Y)[2] # number of columns in data
+means <- apply(Y, 1, mean, na.rm=TRUE)
+
+Y$min <- apply(Y, 1, min, na.rm=TRUE)
+Y$max <- apply(Y, 1, max, na.rm=TRUE)
+
+myorder <- order(means, decreasing=TRUE)
+
+plot(x = Y[,1][myorder], y = 1:nr, 
+     xlab = "Observed difference in treatment scores", ylab = "patient ID", xlim = c(-3,5), ylim = c(-1,23), axes = FALSE)
+points(x = 0.44, y= -1, type="p", pch=18, col="blue", cex=2.5)
+axis(1,-3:5, -3:5)
+axis(2,1:23, rev(1:23), par(las=1))
+box()
+abline(v=0, col="grey", lty=2, lwd=1)
+for (i in 1:nc){
+  for(j in 1:nr){
+  points(x = Y[,i][myorder], y = 1:nr, col = i)
+    lines(x = c(Y$min[myorder][j], Y$max[myorder][j]), y = c(j,j), lty = 2,col = "red")
+  }
+}
+
+legend("topright", pch = c(rep(1,6),18), col = c(1:6, "blue"), bg="white", 
+       cex = 0.8, title = "Difference in treatment response",
+       legend = c("Treatment period 1","Treatment period 2","Treatment period 3",
+                  "Treatment period 4","Treatment period 5","Treatment period 6",
+                  "Mean overall population \ntreatment difference"
+                  ))
+@
+\end{figure}
+
+\begin{figure}[h!]
+<<echo=TRUE,eval = FALSE, error=FALSE,warning=FALSE,message=FALSE>>=
+Nof1 <- data.frame("ID" = 1:23,
+                   "dose" = c(10,10,10,10,50,10,50,10,10,10,10,25,5,20,
+                              20,10,25,10,50,20,10,10,25),
+                   "n" = c(3,3,3,3,3,3,3,3,3,3,4,6,3,4,3,4,4,3,4,3,3,3,3),
+                   "y[,1]" = c(-0.43,0.35,0.07,0.29,0.57,0.08,-0.36,-0.21,
+                               0.68,-0.64,0.05,0.64,-0.29,4.29,0.64,1.22,
+                               -0.08,1.85,0.86,0.86,1.35,0.47,0.42),
+                   "y[,2]" = c(-0.64,-2,-0.07,-1.42,-2.57,0.43,-0.14,1.28,
+                               -0.25,1,-0.22,1.08,1.08,3.15,0,1.07,0.86,
+                               0.78,1.43,1.39,1.36,0.93,0.71),
+                   "y[,3]" = c(0,-0.92,0.15,0.14,-1.07,-1.07,0.64,-1.5,
+                               -0.09,-0.29,0.57,-0.36,1.5,0.78,0.5,-0.08,
+                               1.07,0.54,0.65,1.85,0.79,0.86,0.66),
+                   "y[,4]" = c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.36,0.79,NA,
+                               4.49,NA,0.5,1.15,NA,1.86,NA,NA,NA,NA),
+                   "y[,5]" = c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,-0.64,NA,
+                               NA,NA,NA,NA,NA,NA,NA,NA,NA,NA),
+                   "y[,6]" = c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,1.5,NA,NA,
+                               NA,NA,NA,NA,NA,NA,NA,NA,NA),
+                   stringsAsFactors = FALSE)
+Y <- Nof1[,4:9]
+nr <- dim(Y)[1] # number of rows in data
+nc <- dim(Y)[2] # number of columns in data
+means <- apply(Y, 1, mean, na.rm=TRUE) # mean per patient
+Y$min <- apply(Y, 1, min, na.rm=TRUE) # mimimum value
+Y$max <- apply(Y, 1, max, na.rm=TRUE) # maximum value
+myorder <- order(means, decreasing=TRUE) # order of means in decending order
+
+plot(x = Y[,1][myorder], y = 1:nr, 
+     xlab = "Observed difference in treatment scores", ylab = "patient ID", 
+     xlim = c(-3,5), ylim = c(-1,23), axes = FALSE)
+points(x = 0.44, y= -1, type="p", pch=18, col="blue", cex=2.5)
+axis(1,-3:5, -3:5)
+axis(2,1:23, rev(1:23), par(las=1))
+box()
+abline(v=0, col="grey", lty=2, lwd=1)
+for (i in 1:nc){
+  for(j in 1:nr){
+  points(x = Y[,i][myorder], y = 1:nr, col = i)
+    lines(x = c(Y$min[myorder][j], Y$max[myorder][j]), 
+          y = c(j,j), lty = 2,col = "red")
+  }}
+legend("topright", pch = c(rep(1,6),18), col = c(1:6, "blue"),  bg="white", 
+       cex = 0.8, title = "Difference in treatment response",
+       legend = c("Treatment period 1","Treatment period 2","Treatment period 3"
+                  ,"Treatment period 4","Treatment period 5","Treatment period 6"
+                  ,"Mean overall population \ntreatment difference"))
+@
+\end{figure}
+
+<<echo = FALSE, message= FALSE, warning= FALSE, cache= TRUE, cache.comments= FALSE, prompt=FALSE, results= 'hide'>>=
+
+#data
+
+Nof1 <- data.frame("ID" = 1:23,
+									 "dose" = c(10,10,10,10,50,10,50,10,10,10,10,25,5,20,20,10,25,10,50,20,10,10,25),
+									 "n" = c(3,3,3,3,3,3,3,3,3,3,4,6,3,4,3,4,4,3,4,3,3,3,3),
+									 "y[,1]" = c(-0.43,0.35,0.07,0.29,0.57,0.08,-0.36,-0.21,0.68,-0.64,0.05,0.64,-0.29,4.29,0.64,1.22,-0.08,1.85,0.86,0.86,1.35,0.47,0.42),
+									 "y[,2]" = c(-0.64,-2,-0.07,-1.42,-2.57,0.43,-0.14,1.28,-0.25,1,-0.22,1.08,1.08,3.15,0,1.07,0.86,0.78,1.43,1.39,1.36,0.93,0.71),
+									 "y[,3]" = c(0,-0.92,0.15,0.14,-1.07,-1.07,0.64,-1.5,-0.09,-0.29,0.57,-0.36,1.5,0.78,0.5,-0.08,1.07,0.54,0.65,1.85,0.79,0.86,0.66),
+									 "y[,4]" = c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.36,0.79,NA,4.49,NA,0.5,1.15,NA,1.86,NA,NA,NA,NA),
+									 "y[,5]" = c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,-0.64,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA),
+									 "y[,6]" = c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,1.5,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA),
+									 stringsAsFactors = FALSE)
+
+dd <- Nof1 %>% select(4:9)
+
+nID <- Nof1$n
+
+#####################################################
+############# Independence model ####################
+#####################################################
+
+# simulate a data
+nr <- dim(dd)[1] # number of rows in data
+nc <- dim(dd)[2] # number of columns in data
+
+#
+library(rjags)
+library(coda)
+
+an_data <- list(y=dd, nID = nID, nr = nr)
+
+## independence model
+modelString = " # open quote for modelString
+model{
+## likelihood
+for (k in 1:nr){
+for (j in 1:nID[k]){
+y[k, j] ~ dnorm(theta[k], inv_sigma2[k])
+}
+theta[k] ~ dunif(-10, 10)
+inv_sigma2[k] ~ dgamma(0.001, 0.001)
+}
+# deterministic definition of variance
+sigma2 <- 1/inv_sigma2
+# deterministic definition of standard deviation
+sigma <- sqrt(sigma2)
+}
+" # close quote for modelString
+
+
+writeLines(modelString, con="TempModel2.txt") # write to a file
+
+# model initialisation
+model.jags <- jags.model(
+	file = "TempModel2.txt",
+	data = an_data,
+	# inits = wb_inits,
+	n.chains = 1,
+	n.adapt = 4000
+)
+
+update(model.jags, n.iter = 4000)
+
+# sampling/monitoring
+fit.jags.coda <- coda.samples(
+	model = model.jags,
+	variable.names = c("theta", "sigma2", "inv_sigma2", "sigma"),
+	n.iter = 50000,
+	thin = 1
+)
+
+sum.res.ind <- summary(fit.jags.coda)
+
+new.dat.ind <- data.frame(
+	mean = sum.res.ind$statistics[,"Mean"],
+	sd = sum.res.ind$statistics[,"SD"],
+	lower = sum.res.ind$quantiles[,"2.5%"],
+	upper = sum.res.ind$quantiles[,"97.5%"]
+)
+
+new.theta.ind <- new.dat.ind[grep("theta", rownames(new.dat.ind)),]
+new.sigma.ind <- new.dat.ind[grep("\\bsigma\\b", rownames(new.dat.ind)),]
+
+Y <- Nof1[,4:9]
+means <- apply(Y, 1, mean, na.rm=TRUE)
+ConfInt <- matrix(NA, ncol=2, nrow=length(means))
+for(i in 1:length(means))
+	ConfInt[i,] <- t.test(x=Nof1[i,])$conf.int
+myorder <- order(means, decreasing=TRUE)
+
+
+final.new.ind <- data.frame(
+	ID = 1:length(means),
+	theta = new.theta.ind$mean,
+	sigma = new.sigma.ind$mean,
+	lower = new.theta.ind$lower,
+	upper = new.theta.ind$upper,
+	means = means
+)
+
+#####################################################
+############# Exchangeable model ####################
+#####################################################
+
+# simulate a data
+nr <- dim(dd)[1] # number of rows in data
+nc <- dim(dd)[2] # number of columns in data
+
+an_data <- list(y=dd, nID = nID, nr = nr)
+
+## exchangeable model
+modelString = " # open quote for modelString
+# open quote for modelString
+model{
+## likelihood
+for (k in 1:nr){
+for (j in 1:nID[k]){
+y[k, j] ~ dnorm(theta[k], 1/sigma2[k])
+}
+theta[k] ~ dnorm(mutheta, 1/tautheta^2)
+sigma2[k] ~ dlnorm(musigma, 1/tausigma^2)
+sigma[k] <- sqrt(sigma2[k])
+}
+## population parameters for theta
+mutheta ~ dunif(-10, 10)
+tautheta ~ dunif(0, 50)
+## population parameters for sigma
+musigma ~ dunif(-10, 10)
+tausigma ~ dunif(0, 10)
+}
+" # close quote for modelString
+
+
+writeLines(modelString, con="TempModel3.txt") # write to a file
+
+# model initialisation
+model.jags <- jags.model(
+	file = "TempModel3.txt",
+	data = an_data,
+	# inits = wb_inits,
+	n.chains = 1,
+	n.adapt = 4000
+)
+
+update(model.jags, n.iter = 4000)
+
+# sampling/monitoring
+fit.jags.coda <- coda.samples(
+	model = model.jags,
+	variable.names = c("theta", "sigma2", "sigma"),
+	n.iter = 50000,
+	thin = 1
+)
+
+sum.res.ex <- summary(fit.jags.coda)
+
+new.dat.ex <- data.frame(
+	mean = sum.res.ex$statistics[,"Mean"],
+	sd = sum.res.ex$statistics[,"SD"],
+	lower = sum.res.ex$quantiles[,"2.5%"],
+	upper = sum.res.ex$quantiles[,"97.5%"]
+)
+
+new.theta.ex <- new.dat.ex[grep("theta", rownames(new.dat.ex)),]
+new.sigma.ex <- new.dat.ex[grep("\\bsigma\\b", rownames(new.dat.ex)),]
+
+final.new.ex <- data.frame(
+	ID = 1:length(means),
+	theta = new.theta.ex$mean,
+	sigma = new.sigma.ex$mean,
+	lower = new.theta.ex$lower,
+	upper = new.theta.ex$upper,
+	means = means
+)
+@
+
+\begin{figure}[h!]
+  \caption{Estimates and 95\% intervals for the response in each person assuming both independent and exchangeable individuals}
+  \label{fig:2}
+<<echo= FALSE, results= 'hide'>>=
+#######################################
+# plot
+#######################################
+
+par(las=1)
+library(gplots)
+gplots::plotCI(y=1:nr, x = final.new.ind$theta[myorder], li= final.new.ind$lower[myorder], ui = final.new.ind$upper[myorder], err="x",
+							 ylab="patient ID", xlab="Treatment benefit", pch=19, xlim=c(-6,6), ylim = c(1,23), yaxt='n')
+par(new=T)
+plotCI(y=(1:nr)-0.3, x = final.new.ex$theta[myorder], li= final.new.ex$lower[myorder], ui = final.new.ex$upper[myorder], err="x",
+			 ylab="patient ID", xlab="Treatment benefit", pch=19, xlim=c(-6,6), ylim = c(1,23), yaxt='n', col = "red", lty=2)
+abline(v=0, lty=2, col = "blue")
+op <- par(cex = 0.7)
+axis(2,at = 1:23, rev(1:23), par(las=1))
+legend("bottomleft", legend=c("Independent", "Exchangeable"), bg="white", 
+			 col=c("black", "red"), lty=1:2, cex=1.5)
+@
+
+\end{figure}
+
+\ref{fig:2} shows the 95\% CIs when treating patients as independent and also exchangeable. When treating the patients as exchangeable, it is noticable that there is considerable shrinkage in the 95\%CIs in the patients with extreme values. This is due to the limited number of test results of these patients. The number of patents with 95\% CI excluding 0 is 9 when patients are treated as exchangeable and 6 when treated as independent. When comparing the mean treatment difference per patient, 6 out of 23 patients had a mean difference less than 0 when treating the patients as independent. However, this is reduced to 3 out of 23 when treating the patients as exchangeable. The results are summaried in \ref{table:3}
+\clearpage
+
+\todo{use R chunks and xtable to show the numbers in this table} % see all other commments 
+\begin{table}[h!]\small
+  \caption{Estimates and 95\% intervals for the response in each person, assuming both independent and exchangeable individuals}
+\label{table:3}
+    \begin{tabular}{l|c|c|c}
+    \hline
+      \textbf{Parameter} &  & \textbf{Median/ estimate} & \textbf{95\% CI}\\
+      \hline\hline
+ Overall mean & $\mu_\theta$ & 0.42 & 0.13 to 0.73\\
+ Prob. overall positive effect & $\Pr(\mu_\theta>0)$ & 0.997 & \\
+ Prob. overall important effect & $\Pr(\mu_\theta>0.5)$ & 0.29 & \\
+ Between-patient sd & $\tau_\theta$ & 0.50 & 0.20 to 0.92\\
+ Between-patient variability in log-variances & $\tau_\theta$ & 1.03 & 0.42 to 1.77\\
+ Mean within-patient variance & ${\exp(\mu_\sigma+\tau_\sigma^2)}/{2}$ & 3.17 & 1.44 to 12.00\\
+ \hline
+\end{tabular}
+\end{table}
+\end{example}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%% Chapter 6.12 %%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Other aspects of drug development}
+\subsection{Pharmacokinetics}
+Pharmacokinetics is the branch of pharmacology concerned with the movement of drugs within the body. The parameters underlying each individual's drug clearance curve are viewed as being drawn from some population. MCMC methods are used to estimating both the population and individual parameters as well as individualising dose selection.
+\subsection{Phase I trials}
+Phase I trials are conducted to determine the dosage of a new treatment where the level of risk of toxic response is acceptable. Continual reassessment method (CRM) is the primary Bayesian contribution to the development methodology for phase I trials. In CRM, a parameter underlying a dose-toxicity curve is given a proper prior which is updated to find the "best" estimate if given to the next patient and the probability of a toxic event.
+\subsection{Phase II trials}
+Phase II clinical trials are carried out on patients to assess efficacy and side effects. The number of doses may also be compared. Bayesian work has focused on monitoring, sample-size determination
+and adaptive design.
+\subsection{Phase IV}
+Phase IV trials are used for safety monitoring to monitor adverse drug reactions in the population. \newline
+

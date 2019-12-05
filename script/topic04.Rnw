@@ -1,0 +1,436 @@
+% LaTeX file for Application Chapter 04
+<<'preamble04',include=FALSE>>=
+library(knitr)
+library(bayesianBiostatUZH)
+opts_chunk$set(
+    fig.path='figure/ch04_fig', 
+    self.contained=FALSE,
+    cache=TRUE
+) 
+@
+
+\appChapter{Comparison of Alternative Approaches to Inference}{Seraphina}{Kissling}
+
+\section{A Structure for Alternative Approaches}
+Dividing statistical methods into 'classical' and 'Bayesian' simplifies things too much. Table \ref{tab4.1} divides these methods into 6 categories based on the use uf prior evidence and the objective. Inference is used for parameter estimation. An example for inference is given in Example \ref{ex3.3} where the goal is to estimate the response rate of a drug. If the response rate was calculated with maximum likelihood estimation, the procedure would fall into the \emph{Fisherian} approach to inferece. However, in this example they used prior distributions. Therefore, they used a \emph{proper Bayesian} approach. If we look at hypothesis testing in our example, one question could be whether or not the response rate is bigger than $0.2$. \emph{Neyman--Pearson} is an approach to hypothesis testing where we either keep or reject $H_0$ based on the value of the test-statistic. \emph{Bayes factors}, on the other hand, is an approach to the same problem where the answer is not dichotomous. It is a measure of how likely $H_0$ is compared to the alternative $H_1$. An example for decision making could be 'Can we bring our new drug to the market?'. In order to answer this question, we look at loss functions. Possible factors which could influence this decision are the effect size, finances, what the demand for the drug might be and what side effects the drug has. If this is done with formal use of prior evidence, we call it \emph{full decision-theoretic Bayesian}, else \emph{classical decision theory}.
+
+\begin{table}[!ht]
+\caption {Overview of approaches to statistical inference based on the use of prior information.}
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+                                       &                   & \multicolumn{3}{c}{Objective}                                                                     \\ \midrule
+                                       &                   & \textit{Inference (estimation)} & \textit{Hypothesis testing} & \textit{Decision (loss function)} \\
+\multirow{2}{*}{Use of prior evidence} & \textit{Informal} & Fisherian                       & Neyman--Pearson              & Classical decision theory         \\
+                                       & \textit{Formal}   & Proper Bayesian                 & ‘Bayes factors’             & Full decision-theoretic Bayesian  \\ \midrule
+\end{tabular}
+}
+\label{tab4.1}
+\end{table}
+
+\section{Conventional Statistical Methods used in Health-Care Evaluation}
+
+Which of these above approaches are used in health-care evaluation? This chapter will look at the most commonly used statistical methods and shed some light on the problems which arise from them.
+
+\subsection{$P$-Values}
+In order to judge whether or not a trial was able to show enough evidence against $H_0$, \emph{Fisher's} approach based on $p$-values is used in the vast majority of cases.
+
+The $p$-value is defined as the probability, under the assumption of $H_0$, of obtaining a result equal or more extreme than what was actually observed. When first introduced, they were intended as an informal guide to the strength of evidence. In practice, the $p$-value unfortunately is often perceived as a dichotomous way of deciding whether or not to reject the $H_0$. It should, however, be seen as a measure of evidence against $H_0$. Table \ref{tab_bland} divides the strength of evidence against $H_0$ into five categories given in \cite{bland2015}.
+
+\begin{table}[!ht]
+\centering
+\caption{Categorization of $p$-values into levels of evidence against $H_0$.}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\multicolumn{1}{c}{$p$-value} & \multicolumn{1}{c}{Strength of evidence against $H_0$} \\ \midrule
+\textgreater{}0.1           & Little or no evidence                                  \\
+0.1 to 0.05                 & Weak evidence                                          \\
+0.05 to 0.01                & Evidence                                               \\
+0.01 to 0.001               & Strong evidence                                        \\
+\textless{}0.001            & Very strong evidence                                   \\ \bottomrule
+\end{tabular}
+\label{tab_bland}
+\end{table}
+
+Even if used in a correct manner, there are some issues with using $p$-values for health-care evaluation. Two of these are illustrated in Examples \ref{ex4.1} and  \ref{ex4.2}.
+
+
+ 
+\begin{example}
+\label{ex4.1}
+We look at two different study designs for determining whether participants prefer treatment A or B in Table \ref{tab4.2}. We are interested in the proportion $\theta$ of the population preferring A. Under $H_0$, we assume $\theta$ to be $0.5$.
+
+Design 1 has a fixed sample size of six people. Thereof, the first five participants preferred A, while only the last one preferred B. The likelihood arises from the binomial distribution and is proportional to $\theta^5(1-\theta)$. The continuity corrected two-sided $p$-value is 0.13. 
+% The likelihood principle states that all evidence about $\theta$ can be extracted from this function. If we look at the $p$-value, however, we disregard the likelihood principle because we look at the probability of observing a result "at least as extreme" as the data.
+
+Design 2 does not fix the sample size. The study stops when it found the first participant who prefers treatment B over A. In line with the first design, the first five participants prefer A, while the sixth prefers B. The likelihood in this design is based on the geometric distribution where the chance of first getting a B preference on the $n^{th}$ trial is $\theta^{n-1}(1-\theta)$. In this design, the continuity corrected two-sided $p$-value is 0.046.
+
+\begin{table}[!ht]
+\centering
+\caption{Two different experimental designs: (1) ask six subjects whether they prefer A or B; (2) ask subjects sequentially until one prefers B and then stop. Observed data comprise 5 preferences for A and one for B. Highlighted values indicate potential data ‘at least as extreme’ as that observed under the null hypothesis $H_0$ of no overall preference in the population, i.e. the probability of either preference is 0.5.}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+\multicolumn{2}{c}{Design 1}                    & \multicolumn{2}{c}{Design 2}                         \\ \midrule
+Subjects preferring A & Probability under $H_0$ & First subject preferring B & Probability under $H_0$ \\ \midrule
+0                     & 1/64                    & 1                          & 1/2                     \\
+1                     & 6/64                    & 2                          & 1/4                     \\
+2                     & 15/64                   & 3                          & 1/8                     \\
+3                     & 20/64                   & 4                          & 1/18                    \\
+4                     & 15/64                   & 5                          & 1/32                    \\
+\textbf{5}            & \textbf{6/64}           & \textbf{6}                 & \textbf{1/64}           \\
+\textbf{6}            & \textbf{1/64}           & \textbf{7}                 & \textbf{1/128}          \\ \bottomrule
+\end{tabular}
+\label{tab4.2}
+\end{table}
+
+It becomes obvious that the choice of study design leads to a different $p$-value for the same data. In the commonly used practice of rejecting $H_0$ if the $p$-value is smaller than 0.05, Design 1 would keep the assumption of $\theta=0.5$, while design 2 would reject it. This is a major problem because the same data should lead to the same conclusion, no matter which study design you choose.
+
+\end{example}
+
+
+
+\begin{example}
+\label{ex4.2}
+The second example illustrates how sample size can have a misleading effect on $p$-values. Table \eqref{tab4.3} looks at four studies which yield the same two-sided $p$-value of 0.04. The effect size, however, differs strongly between the different studies. The percentage of subjects preferring A ranges from 50.07\% to 75.00\%. 
+
+
+% \todo{compute numbers in table in R chunk and show table with xtable} -----------
+% I can not get this to show up in the report, but to show that I know how to create the data frame I put the code here:
+
+% \begin{table}[!ht]
+% \centering
+% \caption{Four theoretical studies all with the same two-sided $p$-value for the null hypothesis of equal preference in the population.}
+% <<tab44, results='asis', echo=FALSE>>=
+% # create the dataframe:
+% tab44 <- data.frame("Study size"=c(20,200,2000, 2000000))
+% tab44$"Prefer A" <- c(15, 115, 1046, 1001445) 
+% tab44$"Prefer B" <- tab44$Study.size - tab44$`Prefer A`
+% tab44$"% preferring A" <- (tab44$"Prefer A" / tab44$Study.size) * 100
+% 
+% # Calculate the p-values:
+% pval <- list()
+% for (i in seq_along(tab44$Study.size)){
+% 	pval[i] <- binom.test(x = tab44$`Prefer A`[i], 
+% 						 n = tab44$Study.size[i],
+% 						p = 0.5, alternative = "two.sided")$p.value
+% }
+% tab44$"two-sided p-value" <- pval
+% 
+% # Print table:
+% xtable(tab44, digits=2)
+% @
+% \label{tab4.3}
+% \end{table}
+
+\begin{table}[!ht]
+\centering
+\caption {Four theoretical studies all with the same two-sided $p$-value for the null hypothesis of equal preference in the population.}
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{@{}rccc@{}}
+\toprule
+Number of patients and receiving A and B & Numbers preferring A:B & \% preferring A & two-sided $p$-value \\ \midrule
+20                                       & 15:5                   & 75.00           & 0.04              \\
+200                                      & 115:85                 & 57.50           & 0.04              \\
+2'000                                    & 1046:954               & 52.30           & 0.04              \\
+2'000'000                                & 1'001'445:998'555      & 50.07           & 0.04              \\ \bottomrule
+\end{tabular}
+}
+\label{tab4.3}
+\end{table}
+
+
+
+$P$-values are very much effected by the size of the study. If the study is very large, even small effect sizes can result in a significant $p$-value. Looking at the $p$-value only, without considering the effect size, can therefore be very misleading.
+\end{example}
+
+
+\subsection{Type I and II Errors}
+\emph{Neyman--Pearson} introduced the concept of Type I and II errors. Type I and II errors are relevant when hypothesis testing or estimation have to satisfy certain properties in long-run repeated use.
+
+The Type I error $\alpha$ is defined as the chance of incorrectly rejecting $H_0$. It is usually taken as 5\% or 1\%. The motivation for fixing $\alpha$ is to keep the number of studies small who claim that they found out something new while in reality the rejection of $H_0$ was not appropiate but due to a Type I error.
+
+The Type II error $\beta$ is defined as the chance of incorrectly keeping $H_0$. Usually not the Type II error is fixed, but the power. The power is defined as $1-\beta$ and is usually taken as 80\% or 90\%. Fixing the power is often done in calculating the sample size of a study. It should be calculated in a way that if there really is a treatment effect, the study should have enough power to detect it at the specified Type I error rate $\alpha$.
+
+One issue with fixing the Type I error rate is that you run into multiple testing problems when you do not adjust them. One one hand, this can be performing multiple statistical test in one single trial. A common example is looking at many diffferent genes as a possible cause for a certain diesease. On the other hand, the same problem arises in studies with sequential design. The data are periodically analysed and the study stopped if sufficiently convincing results obtained. Such repeated analysis of the data can have a strong effect on the overall Type I error in the experiment, since there are many opportunities to obtain a false positive result. In both cases, approaches such as Bonferroni corrections, $\alpha$-spending functions or stopping rules are applied in order to control the Type I error.
+
+Sequential analysis is a major topic for discussion between scholars from classical and Bayesian background. In 1975, Anscombe formulated his concerns about classical methods of evaluating sequential analysis as follows: "Provided the investigator has faithfully presented his methods and all of his results, it seems hard indeed to accept the notion that I should be influenced in my judgement by how frequently he peeked at the data while he was collecting it."
+
+\subsection{Likelihood Principle}
+In the previous subsections, we have shown several examples where widely used methods for evaluating health-care related studies fall short. The reason for this is that they do not respect the likelihood principle. 
+The likelihood principle states that all the information which the data provide about the parameter is contained in the likelihood. This principle is fulfilled in Bayesian inference: relative plausibility of an alternative hypothesis is obtained through the relative likelihood. $P$-values, by contrast, do not adhere to the likelihood principle. The problem lies within its definition: What exactly is a result "equal or more extreme than what was actually observed"? This issue of loosing information from the data by using methods which do not adhere to the likelihood principle also mantifests when using \emph{Neyman--Pearson} approaches in sequential analysis.
+
+
+\section{Bayes Factor as an Alternative to $p$-values}
+A likelihood principle-respecting alternative to $p$-values are Bayes factors. The Bayes factor is a quantitative measure of how the data y have increased/decreased the odds of $H_0$, regardless of the actual value of the prior probability $p(H_0$) \citep{held2018p}. 
+
+\begin{align*}
+ \text{BF}= \frac{p(\text{data}  \given  H_0)}{p(\text{data}  \given  H_1)}
+\end{align*}
+
+
+It compares the likelihood of the data y under $H_0$ to the likelihood of y under $H_1$. Table \ref{tab_BF} categorizes the Bayes Factor into five levels of evidence against $H_0$ \citep{jeffreys}.
+
+% by Jeffreys:
+\begin{table}[!ht]
+\centering
+\caption{Categorization of Bayes Factors into levels of evidence against $H_0$.}
+\begin{tabular}{ll}
+\hline
+\multicolumn{1}{c}{Bayes Factor} & \multicolumn{1}{c}{Strength of evidence against $H_0$} \\ \hline
+1 to 1/3                         & Bare mention                                           \\
+1/3 to 1/10                      & Substantial                                            \\
+1/10 to 1/30                     & Strong                                                 \\
+1/30 to to 1/100                 & Very strong                                            \\
+1/100 to 1/300                   & Decisive                                               \\ \hline
+\end{tabular}
+\label{tab_BF}
+\end{table}
+
+
+\subsection{Simple Hypotheses}
+Simple means that the $H_1$ consists of a single number. When both $H_0$ and $H_1$ are ‘simple’ (i.e. there are no unknown parameters), the Bayes factor is a measure of the evidence in the data alone and is not affected by any prior probabilities.  For example, we consider $H_0: \theta_0=0$ to $H_1: \theta_1=5$.
+
+When we do not have any further information on the data except for the significance at the $\alpha*100\%$ level, the Bayes Factor for simple hypotheses is
+
+% BF if only significant/ not significant:
+\begin{align}
+ \text{BF}= \frac{\Pr(\text{'significant'} \given H_0)}{\Pr(\text{'significant'} \given H_1)} = \frac{\alpha}{1- \beta},
+ \label{eq4.1}
+\end{align}
+
+where $\alpha$ and $\beta$ are the Type I and II error rates. It is important to note the behaviour of equation \eqref{eq4.1} as the sample size increases but the alternative hypothesis $H_1$ remains fixed. In this case the power 1-$\beta$ of the study increases, and hence $\beta$ decreases. Therefore, the Bayes Factor decreases towards  $\alpha$. In other words, ‘significant’ results provide more evidence against the null hypothesis for larger sample sizes.
+This contrasts what we have seen in Example \ref{ex4.2}. There, we observed that large sample sizes lead to significance for smaller effect sizes than small sample sizes.
+We therefore appear to have contradictory claims that both smaller and larger studies suggest increased evidence against the null hypothesis when reporting a ‘significant’ result.
+
+In order to solve this confusion, we need to differentiate between knowing a study was significant at the 5\% level, and knowing that the exact $p$-value was 5\%. For the latter, we will look at the Bayes Factor for normal distributions. We consider $H_0:\theta=0$ and $H_1:\theta=\theta_A$ with $\theta_A>0$. The likelihood is
+
+\begin{align*}
+ y_m \sim \text{N}\biggl[\theta,\frac{\sigma^2}{m}\biggr].
+\end{align*}
+
+Then the Bayes factor is the likelihood ratio 
+
+% BF from normal likelihood:
+\begin{align}
+ \text{BF}= \frac{p(y_m  \given  \theta=0)}{p(y_m  \given  \theta=\theta_A)} = \exp\biggl(-\frac{m}{\sigma^2}\biggl[y_m^2-(y_m-\theta_A)^2\biggr]\biggr) \\
+ = \exp\biggl(-\frac{m \theta_A}{\sigma^2}\biggl[y_m-\frac{ \theta_A}{2}\biggr]\biggr). 
+ \label{eq4.2}
+\end{align}
+
+If $y_m < \theta_A/2$, the Bayes Factor exceeds 1 and hence favours $H_0$, while if $y_m > \theta_A/2$ the Bayes Factor is less than 1 and favours $H_1$. Equation \eqref{eq4.2} can be reparametrized to
+
+% BF with reparametrization:
+\begin{align}
+ \text{BF} = \exp\biggl(-\sqrt{m}z_m\delta + \frac{m \delta^2}{2}\biggr).  
+ \label{eq4.3}
+\end{align}
+
+with $\delta=\theta_A/\sigma$ and $z_m=y_m\sqrt{m}/\sigma$. We gather from equation \eqref{eq4.3} that, for fixed $z_m$ and hence fixed $p$-value, the Bayes Factor will increase with sample size m, and hence support the above discussed observation that smaller sample sizes are more indicative of the falsity of the null hypothesis.
+
+Equations \eqref{eq4.1} and \eqref{eq4.3} formally showed that both observations in the above discussed paradox about sample sizes are true. The difference is what was meant by a 'significant' result.  When we only know a result achieved significance at a fixed level, the evidence against $H_0$ increases with sample size, while if we know the exact $p$-value, the evidence against $H_0$ decreases with sample size.
+
+\subsection{Composite Hypotheses}
+In practice, alternative hypotheses are more often defined in a way that $\theta_A$ can take a range of values such as $\theta_A \neq 0$ instead of a single number. These are known as composite hypotheses. Calculating the Bayes Factor is now more complicated because we need to find the overall likelihood $p(\text{data} \given H_1)$ where $\theta$ under $H_1$ is not a single number. 
+
+An easy alternative for the normal model when $H_1: \theta \neq 0$ is calculating the minimum Bayes Factor. In this approach, $\theta_A$ is estimated by maximum likelihood. The minium Bayes factor quantifies the maximal evidence against $H_0$. The minimum Bayes factor occurs when $\theta_A = y_m$:
+
+\begin{align*}
+  \text{BF}\textsubscript{min} =  \frac{p( \text{data}  \given  H_0 )}{\max_{\theta} p(\text{data} \given \theta,H_1)}= \frac{p( \text{data}  \given  H_0 )}{p(\text{data} \given \ml{\theta},H_1)}
+\end{align*}
+  
+
+  
+Equation \eqref{eq4.3} then simplifies to
+
+% minBF
+\begin{align}
+ \text{BF}\textsubscript{min} = \exp(-z_m^2 /2).
+ \label{eq4.4}
+\end{align}
+
+
+<<BFmin, echo=FALSE>>=
+p_val <- 0.04
+z_stat <- round(qnorm(p_val/2, 0, 1), 2)
+BF <- round(BF_min(z = z_stat), 2)
+BF_inv <- round(1/BF, 0)
+@
+
+The minimum Bayes factor is similar to $p$-values but obeys the likelihood principle and so are unaffected by stopping rules. However, they still suffer from the criticism displayed in Example \ref{ex4.2}: all studies have the same $p$-value of 0.04. As a consequence, they share a common $z$ statistic of $z_{0.04/2}=\Sexpr{z_stat}$. This leads to the same minimum Bayes Factor of exp$(\Sexpr{z_stat}^2/2)=\Sexpr{BF}$ which is approximately $1/\Sexpr{BF_inv}$. This suggests ‘substantial’ evidence against $H_0$ for all studies, even though they differ in effect size.
+
+As an alternative, we can use a full Bayesian approach. We can assign a prior to the unknown parameter $\theta$ under $H_1$. The likelihood is then replaced by the marginal likelihood 
+
+\begin{align*}
+  p(\text{data}  \given  H_1) = \int p(\text{data}  \given  \theta) p(\theta) d \theta.
+\end{align*}
+
+We define the following prior under the alternative hypothesis
+\begin{align*}
+ \theta \given H_1 \sim \text{N}\biggl[0,\frac{\sigma^2}{n_0}\biggr]
+\end{align*}
+
+and obtain % enter reference to Mark's chapter when ready
+\begin{align*}
+ y_m \given H_1 \sim \text{N}\biggl[0,\sigma^2\biggl(\frac{1}{n_0}+\frac{1}{m}\biggr)\biggr].
+\end{align*}
+
+The Bayes Factor is
+% BF with sample size:
+\begin{align}
+ \text{BF} = \sqrt{1 + \frac{m}{n_0}}\exp\biggl[\frac{-z_m^2}{2(1 + \frac{n_0}{m})}\biggr],
+ \label{eq4.5}
+\end{align}
+
+where $n_0$ can approximately be interpreted as the number of ‘imaginary’ observations taking on the value of the null hypothesis. As will be discussed in chapter 5, $n_0=1$ is a reasonable choice in many circumstances.
+
+Figure \ref{fig4.2} shows the Bayes Factor as a function of sample size ratios m/$n_0$ for different $p$-values. We see the intuitive behaviour that really small studies and really big studies show less evidence against $H_0$. Hence we obererve a dip where medium-sized studies reach a high level of evidence against $H_0$ for relatively low sample size ratios. In addition, the plot illustrates that the Bayes Factor is generally more conservative than the $p$-value. The dashed line for p=0.05 reaches only 'bare mention' at its optimal sample size ratio. In practice, a $p$-value of p=0.05 usually leads to rejecting $H_0$.
+
+The same behaviour can be seen in Figure \ref{fig4.1}. It shows the Bayes Factor as a function of the $p$-value for differents ratios of the sample sizes $m/n_0$. We can see that the Bayes Factor moves within different categories of evidence against $H_0$ than the corresponding $p$-values: For some of the displayed $m/n_0$ ratios, the evidence against $H_0$ by the Bayes Factor is only 'substantial' for a $p$-value of 0.01. This is more conservative than the strength of evidence against $H_0$ of 'strong' which is generally associated with a $p$-value of 0.01. In extreme cases, this can lead to a phenomenon known as Lindley's paradox where $p$-values and Bayes Factors disagree. When the ratio $m/n_0$ is high, and the $p$-value is just marginally significant against $H_0$, the Bayes Factor can be greater than 1 and hence support $H_0$. One possible explanation for this disagreement is the fact discussed in Example \ref{ex4.2} that for large sample sizes, a $p$-value can be small even if the data support values of $\theta$ very close to the null hypothesis. A second explanation is that under a prior with very high variance, if data under $H_0$ are unlikely, they might be even more so under $H_1$ because the alternative spreads the prior probability thinly over a wide range of potential values.
+
+
+
+\begin{figure}[!ht]
+\centering
+<<fig4.2, fig=TRUE, echo=FALSE, eps=TRUE>>=
+# Generate values for the x-axis:
+m_list <- seq(1,1000,length.out = 1000)
+n_list <- rep(1,1000)
+
+# Generate values for the y-axis:
+p_0.05 <- BF_normal_composite(m=m_list, n=n_list, z=qnorm(0.05/2))
+p_0.001 <- BF_normal_composite(m=m_list, n=n_list, z=qnorm(0.001/2))
+p_0.0001 <- BF_normal_composite(m=m_list, n=n_list, z=qnorm(0.0001/2))
+
+# Plot the graph:
+par(mar = c(5.1, 5.1, 4.1, 6.1))
+plot((m_list/n_list),p_0.05, log='xy', type='l',lty='dotted',
+     xlim=c(1,1000),ylim=c(1/3200,10),
+     xlab=expression("m"/"n"[0]), ylab='Bayes factor', 
+     xaxt = "n", yaxt = "n", bty = "n")
+abline(h=1)
+abline(h=c(1/3.2,1/10,1/32,1/100,1/320), lty='dotted')
+axis(side = 1, at = c(1,5,10,50,100,500,1000),
+     labels = c(1, 5,10,50,100,500,1000))
+axis(side = 2, at = c(1/3200, 1/1000, 1/320, 1/100, 1/32, 
+                      1/10, 1/3.2, 1, 3.2,10),
+     labels = c("1/3200", "1/1000", "1/320", "1/100", "1/32", 
+                "1/10", "1/3.2", "1", "3.2","10"), las = 1)
+lines((m_list/n_list),p_0.001, type='l',lty='dashed')
+lines((m_list/n_list),p_0.0001, type='l',lty='longdash')
+
+legend('topleft',
+       legend=c(expression("2P" == "0.05"),
+                expression("2P" == "0.001"),
+                expression("2P" == "0.0001")),
+       lty = c('dotted','dashed','longdash'),
+       bty='n')
+axis(4, at = exp((log(c(1,1/3.2,1/10,1/32,1/100))+
+                    log(c(1/3.2,1/10,1/32,1/100,1/320)))/2),
+     labels = c("bare mention", "substantial", "strong", 
+                "very strong", "decisive"),
+     las = 1 ,col='white')
+@
+\caption{Bayes factors for composite normal hypotheses for fixed $p$-values and different $m/n_0$ ratios, \emph{i.e}. ratio of observed to prior sample size, with areas delineated by Jeffreys’ levels of evidence.}
+\label{fig4.2}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+<<fig4.1, fig=TRUE, echo=FALSE, eps=TRUE>>=
+# Generate values for the x-axis:
+p_list <- seq(0.00001,0.999,length.out = 1000)
+
+# Generate values for the y-axis:
+r1 <- BF_normal_composite(m=1, n=1, z=qnorm(p_list/2))
+r10 <- BF_normal_composite(m=10, n=1, z=qnorm(p_list/2))
+r100 <- BF_normal_composite(m=100, n=1, z=qnorm(p_list/2))
+BF_min <- BF_min(qnorm(p_list/2))
+
+# Plot the graph:
+par(mar = c(5.1, 5.1, 4.1, 6.1))
+plot(p_list,r1, log='xy', type='l',lty='dotted',
+     xlim=c(0.0001,0.999),ylim=c(1/3200,10), 
+     xlab='2-sided p-value', ylab='Bayes factor', 
+     xaxt = "n", yaxt = "n", bty = "n")
+abline(h=1)
+abline(h=c(1/3.2,1/10,1/32,1/100,1/320), lty='dotted')
+axis(side = 1, at = c(0.0001, 0.001, 0.01, 0.1, 1), 
+     labels = c("0.0001", 0.001, 0.01, 0.1, 1))
+axis(side = 2, at = c(1/3200, 1/1000, 1/320, 1/100, 1/32, 
+                      1/10, 1/3.2, 1, 3.2,10), 
+     labels = c("1/3200", "1/1000", "1/320", "1/100", "1/32", 
+                "1/10", "1/3.2", "1", "3.2","10"), las = 1)
+lines(p_list,r10, type='l',lty='dashed')
+lines(p_list,r100, type='l',lty='longdash')
+lines(p_list,BF_min, type='l',lty='dotdash')
+legend('topleft', 
+       legend=c(expression("m"/"n"[0] == 1),
+                expression("m"/"n"[0] == 10),
+                expression("m"/"n"[0] == 100),
+                "Minimum BF"),
+       lty = c('dotted','dashed','longdash','dotdash'),
+       bty='n')
+axis(4, at = exp((log(c(1,1/3.2,1/10,1/32,1/100))+
+                    log(c(1/3.2,1/10,1/32,1/100,1/320)))/2), 
+     labels = c("bare mention", "substantial", "strong", 
+                "very strong", "decisive"), 
+     las = 1 ,col='white')
+@
+\caption{Bayes factors compared to $p$-values for composite normal hypotheses, showing bands corresponding to Jeffreys levels of evidence. The minimum Bayes factor is the Bayes factor against the maximum likelihood estimate for the parameter under $H_1$.}
+\label{fig4.1}
+\end{figure}
+
+
+\section{Implementation in the bayesianBiostatUZH package}
+This section shows how some of the functions implemented in the bayesianBiostatUZH package can be used to generate Figure \ref{fig4.1}.
+
+\subsection{Minimum Bayes Factor}
+Equation \eqref{eq4.4} is implemented in the function \texttt{BF\_min()}. It takes the $z$-statistic as its only argument and returns the minium Bayes factor.
+<<minBF, echo=TRUE, eval=TRUE>>=
+BF_min(z=1.96)
+@
+
+\subsection{Bayes factor for Normal Distributions for Composite Hypotheses}
+Equation \eqref{eq4.5} is implemented in the function \texttt{BF\_normal\_composite()}. It takes the $z$-statistic, the sample size $m$ and the prior sample size $n$ as arguments and returns the minium Bayes factor.
+<<BFnormalcomp, echo=TRUE, eval=TRUE>>=
+BF_normal_composite(m=10, n=1, z=1.96)
+@
+
+
+\subsection{Code for Figure 4.1}
+\texttt{BF\_normal\_composite()} is used to calculate the Bayes factor for different values of $m$, $n$ and $z$.
+<<code_for_42, echo=TRUE>>=
+# Generate values for the x-axis:
+m_list <- seq(1,1000,length.out = 1000)
+n_list <- rep(1,1000)
+
+# Generate values for the y-axis:
+p_list <- c(0.05, 0.001, 0.0001)
+z_list <- qnorm(p_list/2)
+
+y_val <- data.frame(
+	"p_0.05" = BF_normal_composite(m=m_list, n=n_list, z=z_list[1]),
+	"p_0.001" = BF_normal_composite(m=m_list, n=n_list, z=z_list[2]),
+	"p_0.0001" = BF_normal_composite(m=m_list, n=n_list, z=z_list[3])
+)
+@
+
+\subsection{Code for Figure 4.2}
+\texttt{BF\_min()} and \texttt{BF\_normal\_composite()} are used to calculate the Bayes factor for different values of $m$, $n$ and $z$.
+<<code_for_41, echo=TRUE>>=
+# Generate values for the x-axis:
+p_list <- seq(0.00001,0.999,length.out = 1000)
+
+# Generate values for the y-axis:
+z_list <- qnorm(p_list/2)
+
+y_val <- data.frame(
+	"m_n_1" = BF_normal_composite(m=1, n=1, z=z_list),
+	"m_n_10" = BF_normal_composite(m=10, n=1, z=z_list),
+	"m_n_100" = BF_normal_composite(m=100, n=1, z=z_list),
+	"BF_min" = BF_min(z_list)
+)
+@
+
+
+

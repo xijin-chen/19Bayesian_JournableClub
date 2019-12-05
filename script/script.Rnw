@@ -1,0 +1,163 @@
+\documentclass[11pt,a4paper,twoside]{book}
+\input{header.sty}   % packages, layout and standard macros
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{lscape}
+\usepackage{todonotes}
+%% \input{newCommands}
+
+\begin{document}
+<<'main-setup',include=FALSE,purl=FALSE>>=
+library(knitr)
+library(ggplot2)
+library(dplyr)
+library(cowplot)
+library(bayesianBiostatUZH)
+library(xtable)
+# install.packages("biostatUZH", repos="http://R-Forge.R-project.org")
+library(biostatUZH)
+### IMPORTANT: to make rjags work you need to have JAGS installed
+### Install from here: https://sourceforge.net/projects/mcmc-jags/
+library(rjags)
+library(truncnorm)
+library(MCMCvis)
+library(tidyverse)
+opts_chunk$set(
+    concordance=TRUE,
+    child.command = 'include',
+    cache=TRUE)
+@
+
+\graphicspath{{./figures/}}
+\DeclareGraphicsExtensions{.pdf,.png}
+\setcounter{tocdepth}{1}
+
+
+\thispagestyle{empty}
+\begin{center}
+  \vspace*{6cm}{\bfseries\Huge
+Bayesian Approaches\\[5mm] 
+to Clinical Trials \\[5mm]
+and Health-Care Evaluation\\[1.2cm]
+  
+  \Large
+  David J. Spiegelhalter, Keith R. Abrams and  \\[3mm]
+  Jonathan P. Myles,  Wiley (2004).
+  }
+  \vfill
+  \rm
+
+  \LARGE
+  Participants of STA480, Spring 2019,\\
+  and Leonhard Held, Manuela Ott\\[12mm]
+  
+  \normalsize
+  Version \today
+\end{center}
+\newpage
+\thispagestyle{empty}
+\cleardoublepage
+\pagenumbering{roman}
+
+\thispagestyle{plain}\markboth{Contents}{Contents}
+\tableofcontents
+\setkeys{Gin}{width=.8\textwidth}
+
+\chapter*{Preface}
+\addcontentsline{toc}{chapter}{\bfseries{Preface}}
+\thispagestyle{plain}\markboth{Preface}{Preface}
+
+This document has been written as part of the module
+\emph{STA480 Biostatistical Journal Club} during the Spring Semester
+2019. The module is given in the framework of the Master Program in
+Biostatistics
+(\href{http://www.biostat.uzh.ch}{www.biostat.uzh.ch}) and 4
+ETCS credits are rewarded upon successful completion.
+
+\bigskip
+
+\begin{flushright}
+  Leonhard Held\\
+  June 2019
+\end{flushright}
+
+\addtocontents{toc}{\protect \vspace*{10mm}}
+
+\cleardoublepage
+\pagenumbering{arabic}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<'child-topic01', child='topic01.Rnw'>>=
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<'child-topic02', child='topic02.Rnw'>>=
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<'child-topic03', child='topic03.Rnw'>>=
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<'child-topic04', child='topic04.Rnw'>>=
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<'child-topic05', child='topic05.Rnw'>>=
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<'child-topic06', child='topic06.Rnw'>>=
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<'child-topic07', child='topic07.Rnw'>>=
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<'child-topic08', child='topic08.Rnw'>>=
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<'child-topic09', child='topic09.Rnw'>>=
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+<<'child-topic10', child='topic10.Rnw'>>=
+@
+
+\cleardoublepage
+\phantomsection
+\addtocontents{toc}{\protect \vspace*{5mm}}
+\addcontentsline{toc}{chapter}{\bfseries References}
+
+
+\bibliographystyle{mywiley} 
+\bibliography{biblio01,biblio02,biblio03,biblio04,biblio05,biblio06,biblio07,biblio08,biblio09,biblio10}
+\addtocontents{toc}{\protect \vspace*{6mm}}
+
+\cleardoublepage
+\phantomsection
+%\printindex
+
+\IfFileExists{scriptmanual.tex}{\input{scriptmanual.tex}}%
+                       {\typeout { Run `makeindex  -s script.ist script.idx -o scriptmanual.tex` or copy the file script.ind to scriptmanual.tex}}
+%  makeindex -s script.ist script.idx -o scriptmanual.tex
+
+\cleardoublepage
+
+
+
+\end{document}
+

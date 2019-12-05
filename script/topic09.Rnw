@@ -1,0 +1,621 @@
+% LaTeX file for Application Chapter 09
+<<'preamble09',include=FALSE>>=
+library(knitr)
+library(ggplot2)
+library(dplyr)
+library(cowplot)
+library(bayesianBiostatUZH)
+library(truncnorm)
+### IMPORTANT: to make rjags work you need to have JAGS installed
+### Install from here: https://sourceforge.net/projects/mcmc-jags/
+library(rjags)
+library(coda)
+opts_chunk$set(
+	fig.path='figure/ch09_fig', 
+	self.contained=FALSE,
+	cache=TRUE
+) 
+
+### function section
+
+# function for subplots in figure 7.1
+figure7.1 <- function(dd, title, tag, legend=F, xlab=T){
+	plot <- ggplot(dd, aes(x=exp(x), y=value, linetype=label))+
+		geom_line(size=0.9, na.rm = T)+
+		geom_segment(aes(x=1,y=0,xend=1,yend=2.65), show.legend=F, na.rm = T)+
+		geom_ribbon(data = filter(dd, label=="Posterior" & x <= 0),
+								aes(ymax = value), ymin=0, show.legend = F, na.rm = T,
+								fill="#7fcdbb", colour=NA, alpha=0.5)+
+		scale_x_log10(breaks = c(0.3,0.8,1,1.3,1.8,2.8,3.8),
+									limits=c(0.3,3.8), expand = c(0.01, 0.01))+
+		labs(title=title,
+				 tag=tag,
+				 x=expression("favours 3rd gen."  %<-% "OR" %->% "favours 2nd gen."))+
+		scale_linetype_manual(values = c(1,2,3), name='')+
+		theme(plot.title = element_text(hjust = 0.5),
+					panel.grid.major = element_blank(),
+					panel.grid.minor = element_blank(),
+					axis.text.y = element_blank(),
+					axis.text.x = element_text(size = 10),
+					axis.title.y = element_blank(),
+					axis.title.x = element_text(size = 11, margin = margin(t = 20)),
+					axis.ticks.y = element_blank(),
+					axis.line.y = element_blank(),
+					panel.border = element_blank(),
+					panel.background = element_blank(),
+					axis.line.x = element_line(size = 0.5,
+																		 linetype = "solid",
+																		 colour = "black"),
+					legend.position = "none")
+	if(legend==T){
+		plot <- plot + theme(legend.key = element_rect(fill = "white"),
+												 legend.position = c(-0.1,0.8),
+												 legend.text = element_text(size = 10),
+												 legend.key.size = unit(1.4,"line"))
+	}
+
+	if(xlab==F){
+		plot <- plot + theme(axis.title.x = element_blank())
+	}
+
+	return(plot)
+}
+@
+
+\appChapter{Observational Studies}{Uriah}	{Daugaard}
+
+%=================================================================
+\section{Introduction} \label{sec:introducing}
+%=================================================================
+
+The topic of this chapter are observational studies and how the Bayesian approach can be applied for their analysis. Observational studies are studies in which no randomization takes place. In other words, the participants of observational studies are not randomly assigned to an exposure group. Hence, researchers observe data from these groups but have no control over how they were formed.  There are mainly two reasons for choosing an observational study design over the ``gold standard" (\ie RCTs, see Chapters 6, 7 and 8): either randomizing is ethically or practically not possible or the interest is specifically in non-randomized data \citep{concato2000randomized}.
+
+The central characteristic of observational studies, \ie the non-random groups, means that particular attention needs to given towards potential (systematic) biases introduced by it. Note, however, that the Bayesian approaches introduced in the previous chapters are not based on the assumption of randomized groups but are expressions of personal or group uncertainty. Therefore, at least in principle, these studies can be analyzed in the same manner as randomized study designs, although some additional steps for the control of baseline differences between groups are suggested (see section \ref{sec:alternative}).
+
+Not only that, but the potentially biased groups demand a judgment of their comparability by the researchers and this implies a certain degree of subjectiveness. Hence, the Bayesian approach is particularly suited for the analysis of observational studies as these biases can explicitly be modelled (see section \ref{sec:explicit}).
+
+The topic of the last section of this chapter (section \ref{sec:institutional}) are institutional comparisons. The already introduced concept of the hierarchical modelling framework is used to derive probability statements of the ranks of the institutions.
+
+%=================================================================
+\section{Alternative Study Designs} \label{sec:alternative}
+%=================================================================
+
+In this section two observational study designs are introduced, namely the case-control (section \ref{subsec:casecontrol}) and the cohort study design (section \ref{subsec:cohort}). Other Bayesian methods that can be used for complex epidemiological modelling are not discussed here, but only mentioned. Please refer to the following references for further information:  spatial correlation \citep{heisterkamp1993disease, bernardinelli1995bayesian, richardson1995spatial, ashby1996bayesian}, measurement error \citep{richardson1993bayesian} and missing covariate
+data \citep{raghunathan1996multiple}.
+
+
+%>>>>>>>>>>>>>
+\subsection{Case-Control Studies} \label{subsec:casecontrol}
+%>>>>>>>>>>>>>
+
+A case-control study is a retrospective study design in which, as the name already implies, two outcome groups are compared to see whether they significantly differ for some risk factors (exposures). Already known risk factors can be controlled for by matching and the effect measure is typically the odds ratio.
+
+\citet{ashby1993simple} and references therein discuss two simple approaches to analyze a case-control study with a Bayesian approach using normal approximations. The first models the risk factors which can be used for the odds ratio calculation and the second models the odds ratio directly. These two approaches are presented here.
+
+The following notation is used: $p_0$ and $p_1$ denote the probabilities of having the risk factor in the control and in the cases group, respectively. The odds ratio is then given by
+$\text{OR}=\frac{p_1(1-p_0)}{p_0(1-p_1)}$
+and accordingly the log odds ratio by
+$\theta=\log(\text{OR})$.
+Further, $n_0$ and $n_1$ are respectively the observed controls and cases and $r_0 \leq n_0$ and $r_1 \leq n_1$ are the number of participants exposed to the risk factor in the two outcome groups.
+The odds ratio can then be estimated as
+$\mathrm{\widehat{OR}}=\frac{r_1(n_0-r_0)}{r_0(n_1-r_1)}$
+and the log odds ratio as
+$\hat{\theta}=\log(\mathrm{\widehat{OR}})$.
+
+\subsubsection*{Modelling the risk factors}
+
+Similarly to what has been shown in chapter 1, to model the risk factors and subsequently calculate the odds ratio, a Beta distribution can be chosen as a prior for $p_0$ and for $p_1$ with parameters $(a,b)$ and $(c,d)$, respectively:
+\begin{align}
+p(p_0) \propto p_0^{a-1}(1-p_0)^{b-1}, \\
+p(p_1) \propto p_1^{c-1}(1-p_1)^{d-1}.
+\label{eq:example9.1}
+\end{align}
+%%
+The parameters $a$ and $b$ mean that in $a$ out of $a+b$ participants the risk factor has been observed (and equivalently for the parameters $c$ and $d$). Thus, they can be chosen a priori based on available data or expert opinions.
+
+For the likelihood for $r_i$ and $n_i$ a Binomial distribution can be assumed (with $i=1,2$):
+\begin{align}
+p(r_i, n_i \mid p_i) \propto p_i^{r_i}(1-p_i)^{n_i-r_i}
+\label{eq:example9.2}.
+\end{align}
+
+The posterior distributions for $p_0$ and $p_1$ are then again Beta distributions:
+\begin{align}
+p(p_0 \mid r_0, n_0) \propto \text{Beta}[a+r_0,b+n_0-r_0],
+\label{eq:example9.3.1}
+\end{align}
+and
+\begin{align}
+p(p_1 \mid r_1, n_1) \propto \text{Beta}[c+r_1,d+n_1-r_1].
+\label{eq:example9.3.2}
+\end{align}
+
+% Simple Bayesian analysis in clinical trials: A tutorial - abrams
+Given that $p_0$ and $p_1$ follow a Beta distribution, the log posterior odds ratio is approximately normally distributed with mean 
+\citep{abrams1994simple,Lee2012}:
+\begin{align}
+\mu = \log\left(\frac{(c+r_1-0.5)(b+n_0-r_0-0.5)}{(a+r_0-0.5)(d+n_1-r_1-0.5)}\right),
+\label{eq:example9.4}
+\end{align}
+and variance:
+\begin{align}
+\sigma^2=\frac{1}{a+r_0}+\frac{1}{b+n_0-r_0}+\frac{1}{c+r_1}+\frac{1}{d+n_1-r_1}.
+\label{eq:example9.5}
+\end{align}
+
+If an uninformative prior is desired, then the parameters $a$, $b$, $c$ and $d$ can be set to $0$ (improper prior). Equations (\ref{eq:example9.4}) and (\ref{eq:example9.5}) are then simplified to the equations derived in a classical (frequentist) approach.
+
+
+\subsubsection*{Modelling the odds ratio directly}
+
+As an alternative to the analysis above, the odds ratio can also be modelled directly by using a Normal prior for the log odds ratio $\theta$ (see also chapter 1):
+\begin{align}
+p(\theta) \propto \Nor(\nu, \tau^2).
+\label{eq:example9.6}
+\end{align}
+%%%%
+The likelihood for $\hat{\theta}$ can then be assumed to be normally distributed as well:
+\begin{align}
+p(\hat{\theta} \mid \theta) \propto \Nor(\theta, \xi^2),
+\label{eq:example9.7}
+\end{align}
+with the variance $\xi^2$ that is assumed to be known, but often estimated as
+\begin{align}
+\xi^2 = \frac{1}{r_0}+\frac{1}{n_0-r_0}+\frac{1}{r_1}+\frac{1}{n_1-r_1}.
+\label{eq:example9.8}
+\end{align}
+%%%%
+The resulting posterior is then again normally distributed:
+\begin{align}
+p(\theta \mid \hat{\theta}) \propto \Nor(\mu,\sigma^2),
+\label{eq:example9.9}
+\end{align}
+with mean
+\begin{align}
+\mu = \frac{\theta/\xi^2+\nu/\tau^2}{\xi^{-2}+\tau^{-2}},
+\label{eq:example9.10}
+\end{align}
+and variance
+\begin{align}
+\sigma^2 = \frac{1}{\xi^{-2}+\tau^{-2}}.
+\label{eq:example9.11}
+\end{align}
+
+An uninformative prior can be chosen by setting $\nu=0$ and $\tau^2=\infty$. The resulting posterior mean and variance are then again equal to the estimates of the odds ratio and its variance in the frequentist setting.
+
+%>>>>>>>>>>>>>
+\subsection{Cohort Studies} \label{subsec:cohort}
+%>>>>>>>>>>>>>
+
+A cohort study is a prospective study design. The participants are chosen based on their risk factors (exposures). After sampling the cohort is observed over time and incidences of the outcome of interest are compared between groups that differ in an exposure. The effect measures can be odds ratios, risk ratios or rate ratios. No exemplary analysis is provided here, but please refer to \citet{craig1999bayesian} for an interesting approach in which an MCMC model is combined with a proportional odds logistic regression to model the natural history of diabetic retinopathy.
+
+% \subsection*{Example: Cohort Analysis} \label{ex:cohort}
+
+%=================================================================
+\section{Explicit Modelling of Biases} \label{sec:explicit}
+%=================================================================
+
+Biases involving scientific studies can be categorized into two groups: biases to internal and biases to external validity.
+
+The former means that the estimated effect of interest is either over- or underestimated caused by, for instance, treatment non-compliance. If a proportion $p$ of the participants does not comply, then the estimated effect is then $\theta = (1-p)\theta_t+p\theta_0$, where $\theta_t$ is the true effect and $\theta_0$ is the effect in participants that did not comply. Given other evidence or prior opinions about $p$ and $ \theta_0$ a likelihood for $\theta_t$ can be derived from the likelihood of $\theta$. Amongst others the following biases can be modelled in this way: measurement error in outcome and exposure, loss to follow-up, confounding when the confounder is measurable, and so on.
+
+The other category, \ie biases to external validity, means that the study result cannot be generalized to other populations. These biases include but are not limited to \textit{population bias}, in which the study and general
+population differ with respect to known characteristics, and \textit{intensity bias}, in which the dose of the intervention is varied when generalised.
+
+Here a simple approach to modelling biases is presented, in which a normal likelihood is assumed:
+%
+\begin{align}
+y_m \sim \Nor[\theta_{\text{Int}}, \sigma^2/m].
+\label{eq:bias1}
+\end{align}
+%
+The mean $\theta_{int}$ is the ``internal" and estimated parameter. This parameter can be written as the sum of the real parameter of interest $\theta$ and a bias $\delta$: $\theta_{\text{Int}}=\theta+\delta$. If $\delta$ is known and non-random, the modelling of the bias is straightforward. If the bias is random, the assumption that it is normally distributed as $\delta \sim \Nor[\mu_{\delta},\sigma^2/n_{\delta}]$ can be made. The likelihood is then:
+%
+\begin{align}
+y_m - \mu_{\delta}\sim \Nor\bigg[\theta_{\text{Int}}, \sigma^2\bigg(\frac{1}{m}+\frac{1}{n_{\delta}}\bigg)\bigg].
+\label{eq:bias2}
+\end{align}
+%
+Note that a systematic bias is present when $\mu_{\delta}$ is nonzero.
+
+In the next subsection, an example of this simple model is provided.
+More realistic problems, however, often do not allow an analytic solution and thus MCMC techniques are commonly used.  More serious are the assumptions required concerning the extent of the biases, since although data may be available on which to base accurate estimates, there is likely to be considerable judgemental input.
+
+\subsubsection*{Example: explicit modelling of biases} \label{example1}
+
+In this example, the study of \citet{lilford1996debate} is presented, which investigated whether third-generation oral contraceptives (OCs) increased the risk of venous thromboembolism compared to
+second-generation OCs. The outcome measure was the odds ratio for venous thromboembolism, OR $< 1$ being in favour of 3rd-generation OCs.
+
+\citet{lilford1996debate} used a Bayesian approach: a normal-conjugate model. They used two different priors based on the opinions of two experts (gynaecologists) and the result of a meta-analysis of four case-control studies to assess the risk caused by third-generation OCs.
+
+Expert 1 thought that a 20\% risk reduction in venous thromboembolism would be associated with third-generation compared to second-generation OCs, \ie $\text{OR} = 0.8$, but that the OR could be between 0.4 and 1.6. Assuming this corresponds to a 95\% interval of a normal distribution, the true log(odds ratio), $\theta$, can be assumed to have mean $\mu = \log(0.8) =$ \Sexpr{round(log(0.8),2)} and standard deviation $\log(1.6/0.4)/(2 \cdot 1.96) = $ \Sexpr{sd1<-log(1.6/.4)/(2 * qnorm(0.975)); round(sd1,2)}. Equivalently, if $ \sigma=2$ is chosen, a prior ``number of event" $n_0=(\sigma/0.35)^2=$ \Sexpr{round((2/sd1)^2,1)} is obtained. Similarly, expert 2 thought that there was no difference between second- and third-generation OCs regarding the risk of venous thromboembolism (\ie $ \log(\text{OR})=0$), but was more uncertain about their opinion, indicating that the true OR was
+likely to be between 0.5 and 2.0. This resulted in a standard deviation of $\log(2.0/0.5)/(2 \cdot 1.96) = $ \Sexpr{sd2<-log(2/0.5)/(2 * qnorm(0.975)); round(sd2,2)} (and equivalently $n_0=$ \Sexpr{round((2/sd2)^2,1)}).
+
+A normal distribution for the pooled estimate of $\log(\text{OR})$ derived from the meta-analysis was used as the likelihood. The mean was $\log(2.0)=$\Sexpr{round(log(2),2)} and the standard deviation $0.17$ (and equivalently $m=(\sigma/0.17)^2=$\Sexpr{round((2/0.17)^2,1)}).
+
+To account for bias they used the approaches described earlier in this section to modify the likelihood and compared the results. In other words, they compared the risk of venous thromboembolism between the OC generations when assuming no bias, a random bias with mean 0 and a random systematic bias. When assuming a bias, the variance was chosen such that odds ratio $\theta_{\text{Int}}$ being estimated may be between 60\% and 167\% of the true odds ratio y, \ie up to a 67\% bias in either direction. This corresponds, on a $\log(\text{OR})$ scale, to a bias with standard deviation $\log(1.67/0.6)/(2\cdot 1.96) =$ \Sexpr{sd3 <- log(1.67/0.6)/(2*qnorm(0.975)); round(sd3,2)}. With $\sigma=2$, this can also be expressed as $n_{\delta}=(\sigma/0.26)^2=$ \Sexpr{round((2/sd3)^2,1)}. When a systematic bias was considered, it was assumed that the case-control studies may have overestimated the odds ratios by a median of 30\%. This was then modelled with $\mu_{\delta}=log(1.3)=$ \Sexpr{round(log(1.3),2)}.
+
+
+\begin{figure}[!ht]
+\centering
+<<fig7_1, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE,fig.height=8, fig.width=6>>=
+# Code for Chapter 7 first row of Figure 7.1 of Spiegelhalter 2006
+# Author: Uriah Daugaard
+# Date: 2019/04/23
+
+#---------------------------------------------------------------------------------------------------------------
+######### Parameters and distributions
+
+x <- seq(-1.4,1.4,0.001) # x values
+prior.moments.exp1 <- c(log(0.8),log(1.6/0.4)/(2*qnorm(0.975))) # moments of expert 1 prior
+prior.moments.exp2 <- c(0,log(2/0.5)/(2*qnorm(0.975)))  # moments of expert 2 prior
+prior1 <- dnorm(x, mean = prior.moments.exp1[1], sd = prior.moments.exp1[2]) # expert 1 prior distr
+prior2 <- dnorm(x, mean = prior.moments.exp2[1], sd = prior.moments.exp2[2]) # expert 2 prior distr
+likeli.moments <- c(log(2),log(2.7/1.4)/(2*qnorm(0.975))) # likelihood moments, no bias modelled
+bias.moments <-c(log(1.3),log(1.67/0.6)/(2*qnorm(0.975))) # moments of bias
+
+#---------------------------------------------------------------------------------------------------------------
+######### NO BIAS
+
+likelihood <- dnorm(x, mean = likeli.moments[1], sd = likeli.moments[2]) # likelihood
+
+# first subplot of row 1: no bias, expert 1
+post.moments1 <- posterior_normal(prior.mean = prior.moments.exp1[1], # posterior moments
+                                  prior.sd = prior.moments.exp1[2],
+                                  estimate.mean = likeli.moments[1],
+                                  estimate.se = likeli.moments[2])
+posterior1 <- dnorm(x, mean = post.moments1[1], sd = post.moments1[2]) # posterior distr
+
+dd.a1 <- data.frame(x = rep(x,3), # dataframe for plot: row 1 column 1 (expert 1 - no bias)
+                    label = rep(c("Likelihood","Prior","Posterior"), each = length(x)),
+                    value = c(likelihood,prior1,posterior1))
+
+a1 <- figure7.1(dd.a1, title = "Expert 1\nBias: none", tag = "A", legend=T, xlab=F) # plot it
+
+# ----------- second subplot of row 1: no bias, expert 2
+post.moments2 <- posterior_normal(prior.mean = prior.moments.exp2[1], # posterior moments
+                                  prior.sd = prior.moments.exp2[2],
+                                  estimate.mean = likeli.moments[1],
+                                  estimate.se = likeli.moments[2])
+posterior2 <- dnorm(x, mean = post.moments2[1], sd = post.moments2[2]) # posterior distr
+
+dd.a2 <- data.frame(x = rep(x,3), # dataframe for plot: row 1 column 2 (expert 2 - no bias)
+                    label = rep(c("Likelihood","Prior","Posterior"), each = length(x)),
+                    value = c(likelihood,prior2,posterior2))
+# plot: row 1 column 2 (expert 2 - no bias)
+a2 <- figure7.1(dd.a2, title = "Expert 2\nBias: none", tag = "B", xlab=F)
+
+# AUC
+v_a1 <- dd.a1[dd.a1$x==1 & dd.a1$label=="Posterior",]$value
+v_a2 <- dd.a2[dd.a2$x==1 & dd.a2$label=="Posterior",]$value
+AUC_a1 <- pnorm(v_a1, mean = post.moments1[1], sd = post.moments1[2])
+AUC_a2 <- pnorm(v_a2, mean = post.moments2[1], sd = post.moments2[2])
+
+#---------------------------------------------------------------------------------------------------------------
+######### NON-SYSTEMATIC BIAS
+
+likelihood <- dnorm(x, mean = likeli.moments[1], sd = sqrt(likeli.moments[2]^2 + bias.moments[2]^2))
+
+# first subplot of row 2: non-systematic bias, expert 1
+post.moments1 <- posterior_normal(prior.mean = prior.moments.exp1[1],
+                                  prior.sd = prior.moments.exp1[2],
+                                  estimate.mean = likeli.moments[1],
+                                  estimate.se = likeli.moments[2],
+                                  bias.sd = bias.moments[2])
+posterior1 <- dnorm(x, mean = post.moments1[1], sd = post.moments1[2])
+
+dd.b1 <- data.frame(x = rep(x,3),
+                    label = rep(c("Likelihood","Prior","Posterior"), each = length(x)),
+                    value = c(likelihood,prior1,posterior1))
+
+b1 <- figure7.1(dd.b1, title = "Expert 1\nBias: 0% \u00B1 67%", tag = "C", xlab=F)
+
+# second subplot of row 2: non-systematic bias, expert 2
+post.moments2 <- posterior_normal(prior.mean = prior.moments.exp2[1],
+                                  prior.sd = prior.moments.exp2[2],
+                                  estimate.mean = likeli.moments[1],
+                                  estimate.se = likeli.moments[2],
+                                  bias.sd = bias.moments[2])
+posterior2 <- dnorm(x, mean = post.moments2[1], sd = post.moments2[2])
+
+dd.b2 <- data.frame(x = rep(x,3),
+                    label = rep(c("Likelihood","Prior","Posterior"), each = length(x)),
+                    value = c(likelihood,prior2,posterior2))
+
+b2 <- figure7.1(dd.b2, title = "Expert 2\nBias: 0% \u00B1 67%", tag = "D", xlab=F)
+
+# AUC
+v_b1 <- dd.b1[dd.b1$x==1 & dd.b1$label=="Posterior",]$value
+v_b2 <- dd.b2[dd.b2$x==1 & dd.b2$label=="Posterior",]$value
+AUC_b1 <- pnorm(v_b1, mean = post.moments1[1], sd = post.moments1[2])
+AUC_b2 <- pnorm(v_b2, mean = post.moments2[1], sd = post.moments2[2])
+#---------------------------------------------------------------------------------------------------------------
+######### SYSTEMATIC BIAS
+
+likelihood <- dnorm(x, mean = likeli.moments[1] - bias.moments[1], sd = sqrt(likeli.moments[2]^2 + bias.moments[2]^2))
+
+# first subplot of row 3: systematic bias, expert 1
+post.moments1 <- posterior_normal(prior.mean = prior.moments.exp1[1],
+                                  prior.sd = prior.moments.exp1[2],
+                                  estimate.mean = likeli.moments[1],
+                                  estimate.se = likeli.moments[2],
+                                  bias.mean = bias.moments[1],
+                                  bias.sd = bias.moments[2])
+posterior1 <- dnorm(x, mean = post.moments1[1], sd = post.moments1[2])
+
+dd.c1 <- data.frame(x = rep(x,3),
+                    label = rep(c("Likelihood","Prior","Posterior"), each = length(x)),
+                    value = c(likelihood,prior1,posterior1))
+
+c1 <- figure7.1(dd.c1, title = "Expert 1\nBias: 30% \u00B1 67%", tag = "E")
+
+# second subplot of row 3: systematic bias, expert 2
+post.moments2 <- posterior_normal(prior.mean = prior.moments.exp2[1],
+                                  prior.sd = prior.moments.exp2[2],
+                                  estimate.mean = likeli.moments[1],
+                                  estimate.se = likeli.moments[2],
+                                  bias.mean = bias.moments[1],
+                                  bias.sd = bias.moments[2])
+posterior2 <- dnorm(x, mean = post.moments2[1], sd = post.moments2[2])
+
+dd.c2 <- data.frame(x = rep(x,3),
+                    label = rep(c("Likelihood","Prior","Posterior"), each = length(x)),
+                    value = c(likelihood,prior2,posterior2))
+
+c2 <- figure7.1(dd.c2, title = "Expert 2\nBias: 30% \u00B1 67%", tag = "F")
+
+# AUC
+v_c1 <- dd.c1[dd.c1$x==1 & dd.c1$label=="Posterior",]$value
+v_c2 <- dd.c2[dd.c2$x==1 & dd.c2$label=="Posterior",]$value
+AUC_c1 <- pnorm(v_c1, mean = post.moments1[1], sd = post.moments1[2])
+AUC_c2 <- pnorm(v_c2, mean = post.moments2[1], sd = post.moments2[2])
+
+#---------------------------------------------------------------------------------------------------------------
+######### PLOT
+
+plot_grid(a1,a2,b1,b2,c1,c2, align = "h", ncol=2)
+
+@
+\caption{The distributions of the prior, of the likelihood and of the posterior described in section \ref{example1} and for opinions of the two experts. A-B) no bias assumed. C-D) non-systematic random bias. E-F) systematic random bias.}
+\label{fig7.1}
+\end{figure}
+
+There were 2 different priors (one for each expert) and 3 different likelihoods (one for each assumption of bias). Hence, 6 versions of the posterior were calculated of this normal-conjugate model, which can be seen in Figure \ref{fig7.1}. When no bias was assumed, for both priors the posterior distributions indicated less than a 0.02\% probability that the third-generation OCs reduced the odds of venous thromboembolism (Figure \ref{fig7.1} A-B). When a non-systematic bias was assumed, these probabilities rose to \Sexpr{round(AUC_b1*100,1)}\% and \Sexpr{round(AUC_b2*100,1)}\% for expert 1 prior and expert 2 prior, respectively (Figure \ref{fig7.1} C-D). Lastly, when a systematic overestimation of the OR (\ie a systematic bias) was assumed, these probabilities increased further to \Sexpr{round(AUC_c1*100,1)}\% and \Sexpr{round(AUC_c2*100,1)}\% for prior 1 and 2, respectively (Figure \ref{fig7.1} E-F).
+
+In conclusion, reasonable assumptions about the potential bias in the epidemiological studies combined with a reasonably sceptical prior distribution lead to substantial uncertainty as to the true effect of third-generation OCs.
+
+%=================================================================
+\section{Institutional Comparisons} \label{sec:institutional}
+%=================================================================
+
+In this section, an approach to compare the performance of several institutions is described. The institutions can be, for example, clinicians, medical teams or clinics.
+
+For this comparison, a measure of performance that is available for each institution is needed (for instance, the percentage of successful operations). Further, a reference level, henceforth called benchmark, is needed so that one can say whether an institution is performing accordingly well or not. 
+
+If the observed performance indicators with respective 95\% confidence interval for each institution are plotted, it is expected that on average the confidence interval of 5\% of the institutions will not contain the benchmark by pure chance. Thus, a better approach is needed to deal with this multiplicity problem. Furthermore, some institutions may have been performing particularly badly or well in reference to the benchmark level, but only because of a run of bad or good luck, respectively. The performance indicator of these institutions is expected to shrink towards the benchmark in the future. This is known as \textit{regression to the mean}.
+
+Here, hierarchical Bayesian models as introduced in chapter 3 are used and combined with the MCMC methods also explained in that chapter. In this way, between-institution variability can be included, as well as covariates. By using a common prior distribution for the studies, the regression to the mean phenomena is attenuated as the resulting estimates will be closer to the average performance. These MCMC approaches also allow to derive the credible intervals for the ranks of the institutions.
+
+\subsubsection*{Example: Institutional Comparisons}
+
+The institutional comparison approach is further explained with an example, in which 52 clinics are compared based on their risk-adjusted live birth rate $p$ after \textit{in vitro} fertilization. This rate corresponds to the number of live births over the total number of started treatment cycles in each institution. This analysis was done and published by \citet{marshall1998reliability}. The study design was a retrospective analysis of prospectively collected data between April 1994 and March 1995.
+
+The effective number of successful live births in the $k$th clinic is equal to $r_k=\hat{p}_kn_k$, where $n_k$ is the number of treatments and $\hat{p}_k$ is the estimated adjusted live birth rate. The log-odds are then $y_k=log[(r_k+0.5)/(n_k-r_k+0.5)]$ and the respective variance $s_k^2=1/(r_k+0.5)+1/(n_k-r_k+0.5)$. It can be assumed that the estimated log-odds are normally distributed around the true value of the log-odds of success in the $k$th clinic:
+%
+\begin{align}
+y_k \sim \Nor[\theta_k, s_k^2].
+\label{eq:7.2.1}
+\end{align}
+%
+Equation (\ref{eq:7.2.1}) is the likelihood of the hierarchical model.
+
+For the prior distribution for the $\theta_k$s two models are described here. The first is based on the assumption that the $\theta_k$s are independent. For this case, each $\theta_k$ has an independent uniform prior distribution and thus the posterior is equal to \ref{eq:7.2.1}. In the second model, the studies are assumed to be fully exchangeable (see chapter 3). In this model the prior is chosen to be:
+%
+\begin{align}
+\theta_k \sim \Nor[\mu, \tau^2].
+\label{eq:7.2.2}
+\end{align}
+%
+Thus, further assumptions for the parameters $\mu$ and $\tau$ are needed: $\mu \sim \text{U}[-10,10]$ and $\tau \sim \text{U}[0,10]$.
+
+These two models are used to derivate the posterior distributions for the ranks by simulation. The median rank of each clinic in the simulations is chosen as the point estimate and the respective 95\% credible interval are constructed by taking the 2.5\% and the 97.5\% quantile of the simulated ranks. For the first model (the independence model) the posterior is a truncated normal distribution and can be directly used to simulate the distribution of the ranks. For the exchangeable model, an MCMC approach was used to sample from the posterior, because there is no analytical solution of the model. The \textsf{R}-package \texttt{rjags} was used, which provides an \textsf{R} implementation of the program \textsf{JAGS} (Just Another Gibbs Sampler).
+
+The estimates and 95\% intervals for the adjusted live birth rate in each clinic,
+assuming both independent and exchangeable rates are displayed in Figure \ref{fig7.2}. There is shrinkage towards the overall mean performance with the exchangeable model, as expected. Some clinics remain above or below the benchmark. Again, this method adjusts for the problem of multiple comparisons and to some extent also with the phenomena of regression to the mean.
+
+Figure \ref{fig7.3} shows the median and 95\% intervals for the ranks of the clinics and for the independent and the exchangeable model. It can be seen that, even when institutions perform substantially different from each other, there is considerable uncertainty their true ranks. This is even more so the case when assuming exchangeability, as this reduces the differences between clinics and hence makes their ranks even more uncertain.
+
+<<fig7_2/3, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE,fig.height=8, cache=TRUE, results="hide">>=
+# Code for Chapter 7 first row of Figure 7.2 and 7.3 of Spiegelhalter 2006
+# Author: Uriah Daugaard
+# Date: 2019/05/03
+
+set.seed(12)
+### DATA
+data("clinic", package = "bayesianBiostatUZH")
+dd7.2 <- clinic
+## p = live birth rates
+## n = number of started trials
+## Clinic = name of the clinics
+
+dd7.2$r <- dd7.2$p*dd7.2$n/100 # number of successful live births
+dd7.2$y <- log((dd7.2$r + 0.5)/(dd7.2$n - dd7.2$r + 0.5)) # log odds
+dd7.2$s <- sqrt(1/(dd7.2$r + 0.5) + 1/(dd7.2$n - dd7.2$r + 0.5)) # respective sd
+dd7.2$s2 <- 1/(dd7.2$r + 0.5) + 1/(dd7.2$n - dd7.2$r + 0.5) # variance
+
+
+niter <- 10000
+n <- nrow(dd7.2) # number of clinics
+
+#########################################
+## independence model = fixed model
+#########################################
+
+fix <- apply(dd7.2, 1, function(x){
+	yk <- as.numeric(x[5])
+	sk <- as.numeric(x[6])
+	fix <- rtruncnorm(n = niter, mean = yk, sd = sk, a = -10, b = 10)
+	fix
+})
+
+sims <- apply(fix, 2, function(x){
+	odds.fix <- exp(quantile(x, c(0.025,0.5,0.975)))
+	c(odds.fix/c(1+odds.fix))
+})
+
+fix.ranks <- apply(fix, 1, rank) # matrix with 52 rows and nsim columns. values are the ranks
+fix.ranks <- apply(fix.ranks, 1, function(x){
+	quantile(x, c(0.025,0.5,0.975))
+})
+
+#########################################
+## Exchangeable model = random model
+#########################################
+
+#### MCMC sims
+
+an_data <- list(y=dd7.2$y, n = n, s2 = dd7.2$s2)
+
+modelString = " # open quote for modelString
+model{
+## likelihood
+for (k in 1:n){  
+y[k] ~ dnorm(theta[k], 1/s2[k])
+theta[k] ~ dnorm(mutheta, 1/tautheta^2)
+}
+## population parameters for theta
+mutheta ~ dunif(-10, 10)
+tautheta ~ dunif(0, 10)
+}
+" # close quote for modelString
+
+writeLines(modelString, con="exmodel.txt") # write to a file
+
+# model initialisation
+model.jags <- jags.model(
+	file = "exmodel.txt", 
+	data = an_data,
+	n.chains = 1,
+	n.adapt = 4000
+)
+
+
+update(model.jags, n.iter = 4000)
+
+# sampling/monitoring
+fit.jags.coda <- coda.samples(
+	model = model.jags, 
+	variable.names = c("theta"), 
+	n.iter = 50000,
+	thin = 1
+)
+
+sum.res.ex <- summary(fit.jags.coda)
+ex.median <- exp(sum.res.ex$quantiles[,"50%"])/(exp(sum.res.ex$quantiles[,"50%"])+1)
+ex.lower <- exp(sum.res.ex$quantiles[,"2.5%"])/(exp(sum.res.ex$quantiles[,"2.5%"])+1)
+ex.upper <- exp(sum.res.ex$quantiles[,"97.5%"])/(exp(sum.res.ex$quantiles[,"97.5%"])+1)
+
+rand.ranks <- apply(as.matrix(fit.jags.coda), 1, rank) # matrix with 52 rows and nsim columns. values are the ranks
+rand.ranks <- apply(rand.ranks, 1, function(x){
+	quantile(x, c(0.025,0.5,0.975))
+})
+
+#########################################
+## plots
+#########################################
+
+dd7.2.plot <- rbind(dd7.2,dd7.2)
+dd7.2.plot$type <- rep(c("Independence\nmodel","Exchangeable\nmodel"), each=52)
+dd7.2.plot$lower <- c(sims[1,],ex.lower)
+dd7.2.plot$median <- c(sims[2,],ex.median)
+dd7.2.plot$upper <- c(sims[3,],ex.upper)
+dd7.2.plot$lower.rank <- c(fix.ranks[1,],rand.ranks[1,])
+dd7.2.plot$median.rank <- c(fix.ranks[2,],rand.ranks[2,])
+dd7.2.plot$upper.rank <- c(fix.ranks[3,],rand.ranks[3,])
+
+theme <-  theme_bw()+
+	theme(legend.position =  c(.8,.9),
+				legend.title = element_blank(),
+				axis.title.y = element_blank(),
+				axis.title = element_text(size = 13),
+				axis.text.y = element_text(size = 7),
+				axis.text.x = element_text(size = 10),
+				plot.title = element_text(size = 14),
+				legend.text = element_text(size = 11),
+				panel.grid.major = element_blank(),
+				panel.grid.minor = element_blank())
+
+fig7.2 <- ggplot(dd7.2.plot, aes(y=median*100, x=Clinic, col=type, fill=type))+
+	coord_flip()+
+	geom_hline(yintercept = 14, linetype=2)+
+	geom_errorbar(aes(ymin=lower*100, ymax=upper*100),
+								position = position_dodge(width = 0.6),
+								width=0.5)+
+	geom_point(pch=21, col="black",
+						 position = position_dodge(width = 0.6))+
+	labs(y="Adjusted live birth rate (%)", fill="", col="")+
+	theme +
+	guides(fill = guide_legend(reverse = TRUE),
+				 color = guide_legend(reverse = TRUE)) 
+
+fig7.3 <- ggplot(dd7.2.plot, aes(y=median.rank, x=Clinic, col=type, fill=type))+
+	coord_flip()+
+	geom_hline(yintercept = 13.5, linetype=2)+
+	geom_hline(yintercept = 26.5, linetype=2)+
+	geom_hline(yintercept = 39.5, linetype=2)+
+	geom_errorbar(aes(ymin=lower.rank, ymax=upper.rank),
+								position = position_dodge(width = 0.6),
+								width=0.5)+
+	geom_point(pch=21, col="black",
+						 position = position_dodge(width = 0.6))+
+	labs(y="Rank", fill="", col="")+
+	theme +
+	guides(fill = guide_legend(reverse = TRUE),
+				 color = guide_legend(reverse = TRUE)) 
+
+
+@
+
+\begin{figure}[!ht]
+\centering
+<<fig7_2, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE,fig.height=8, fig.width=6, cache=FALSE>>=
+# Code for Chapter 7 first row of Figure 7.2 of Spiegelhalter 2006
+# Author: Uriah Daugaard
+# Date: 2019/05/03
+fig7.2
+@
+\caption{Estimated adjusted live birth rates in each clinic with corresponding 95\% credible interval for both the models assuming independent and exchangeable rates. The national average is 14\% and is displayed as the vertical dashed line.}
+\label{fig7.2}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+<<fig7_3, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE,fig.height=8, fig.width=6, cache=FALSE>>=
+# Code for Chapter 7 first row of Figure 7.3 of Spiegelhalter 2006
+# Author: Uriah Daugaard
+# Date: 2019/05/03
+fig7.3
+@
+\caption{The rank of each clinic (median) and the 95\% credible intervals simulated with the model assuming independent rates and the model assuming exchangeable rates. The dashed vertical lines mark the quartiles of the ranks.}
+\label{fig7.3}
+\end{figure}
+
+%=================================================================
+\section{\textsf{R} code} \label{sec:rcode9}
+%=================================================================
+
+To include the possibility to model bias for the likelihood in a normal-conjugate model, the function \texttt{posterior\_normal} was extended. This function was already implemented by Mark and will be further improved. The function returns the mean and the standard deviation of the posterior normal distribution.
+The following code chunk shows the exemplary use of the function for the case depicted in Figure \ref{fig7.1}E (prior from expert 1 and systematically biased likelihood):
+
+<<example_post_biased, echo=TRUE>>=
+posterior_normal(
+	prior.mean = log(0.8),
+	prior.sd = log(1.6 / 0.4) / (2 * qnorm(0.975)),
+	estimate.mean = log(2),
+	estimate.se = log(2.7 / 1.4) / (2 * qnorm(0.975)),
+	bias.mean = log(1.3),
+	bias.sd = log(1.67 / 0.6) / (2 * qnorm(0.975))
+)
+@
+
+The entire code used to produce the Figures \ref{fig7.1}, \ref{fig7.2} and \ref{fig7.3} can be found in the \textsf{R}-code files \texttt{example7\char`_1} and \texttt{example7\char`_2} in the \textsf{R}-package \texttt{bayesianBiostatUZH}.

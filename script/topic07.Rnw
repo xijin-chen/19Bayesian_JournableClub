@@ -1,0 +1,919 @@
+% LaTeX file for Application Chapter 07
+% Katrin Petermann, 2019
+
+<<'preamble07', include=FALSE>>=
+opts_chunk$set(
+    self.contained=FALSE,
+    cache=TRUE
+)
+coldef <- c("#048ABF", "#04C4D9", "#F2B705", "#F28705", "#F2380F")
+dev.off()
+@
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% figures %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% figure 6.6
+<<echo=FALSE, include=FALSE>>=
+n <- 1000
+m <- seq(0, 1000, by = 1)
+interim <- seq(0.2, 1.0, by = 0.2)
+
+sceptical_bayesian <- lapply(m, FUN = bayesian_boundary, n = n)
+obrien_fleming <- sapply(c(5*10^-6, 0.0013, 0.0085, 0.0228, 0.0417), qnorm, lower.tail = FALSE)
+pockock <- sapply(c(0.0158, 0.0158, 0.0158, 0.0158, 0.0158), qnorm, lower.tail = FALSE)
+haybittle <- sapply(c(0.001, 0.001, 0.001, 0.001, 0.05), qnorm, lower.tail = FALSE)
+
+qnorm(5*10^-6, lower.tail = FALSE)
+
+
+pdf(file = "./figure/ch07_fig_6-06.pdf", width = 6, height = 5)
+par(mar=c(4,4,1,1)+0.1, las=1)
+
+plot(x = m/n, y = sceptical_bayesian, type = "l",
+     ylim = c(0, 5),
+     xlab = "Proportion of trial completed",
+     ylab = "Classical standardised test statistic Z",
+     xaxt = "n", bty = "n", lty = "solid",
+     main = NULL)
+lines(x = interim, y = obrien_fleming,
+      type = "b", lty = 2, lwd = 1.5, cex = 0.5, pch = 19,
+      col = coldef[1])
+lines(x = interim, y = pockock,
+      type = "b", lty = 4, lwd = 1.5, cex = 0.5, pch = 19,
+      col = coldef[4])
+lines(x = interim, y = haybittle,
+      type = "l", lty = 5, lwd = 1.5,
+      col = coldef[5])
+axis(side = 1, at = c(0, 0.2, 0.4, 0.6, 0.8, 1.0), labels = c("0%", "20%", "40%", "60%", "80%", "100%"))
+legend("bottomright",
+       legend = c("Sceptical Bayesian", "O'Brien-Fleming", "Pocock", "Haybittle-Peto"),
+       lty = c(1, 2, 4, 5),
+       col = c("black", coldef[c(1, 4, 5)]), bty = "n")
+
+dev.off()
+@
+
+% figure 6.7
+<<echo=FALSE, include=FALSE>>=
+x <- seq(log(0.4), log(1.3), len = 1000)
+n0 <- 110
+sigma <- 2
+mu <- 0
+
+# par(mfrow = c(6, 2), mar = c(3, 0, 4, 0))
+
+pdf(file = "./figure/ch07_fig_6-07.pdf", width = 8, height = 9)
+par(mfrow = c(6, 2), mar = c(3,0,4,0), las=1)
+
+frame()
+
+# Sceptical prior
+plot(x = exp(x), y = dnorm(x, mean = mu, sd = sigma / sqrt(n0)), log = "x", type = "l", 
+     yaxt = "n", xaxt = "n", bty = "n", 
+     ylim = c(0, 6), 
+     ylab = "", xlab = "")
+title("Sceptical prior", line = 3)
+psup <- pnorm(log(0.8), mean = mu, sd = sigma / sqrt(n0))
+pequi <- pnorm(log(1), mean = mu, sd = sigma / sqrt(n0)) - pnorm(log(0.8), mean = mu, sd = sigma / sqrt(n0))
+pinf <- 1 - psup - pequi
+legend(x = 0.38, y = 9, bty = "n", cex = 1, 
+       legend = c("CHART superior", "Equivalent", "Control superior"), xpd=TRUE)
+legend(x = 0.51, y = 9, bty = "n", cex = 1, 
+       legend = c(paste(round(psup, 3)), paste(round(pequi, 3)), paste(round(pinf, 3))), xpd=TRUE)
+axis(side = 1, at = seq(0.4, 1.3, by = 0.1))
+abline(v = 0.8)
+abline(v = 1.0)
+
+#likelihood
+cilower <- log(c(0.35, 0.47, 0.55, 0.61, 0.63))
+ciupper <- log(c(0.86, 0.83, 0.90, 0.93, 0.90))
+loghr <- log(c(0.55, 0.63, 0.70, 0.75, 0.76))
+selh <- (cilower - ciupper) / (2*qnorm(0.025))
+
+#posterior
+
+m <- (sigma / selh)^2
+#m <- c(78, 192, 275, 379, 444) 
+postmean <- (n0 * mu + m * loghr) / (n0 + m)
+postse <- sigma / sqrt(n0 + m)
+
+for(i in 1:length(loghr)){
+    # plot likelihood
+    if(i == length(loghr)){
+        plot(x = exp(x), y = dnorm(x, mean = loghr[i], sd = selh[i]), log = "x", type = "l", 
+             yaxt = "n", xaxt = "n", bty = "n", 
+             ylim = c(0, 6), 
+             ylab = "", xlab = "favours CHART   <-   Hazard ratio   ->   favours control", 
+             mgp=c(2,1,1))
+        title(paste(1991+i, "Likelihood"), line = 3)
+    } else {
+        plot(x = exp(x), y = dnorm(x, mean = loghr[i], sd = selh[i]), log = "x", type = "l", 
+             yaxt = "n", xaxt = "n", bty = "n", 
+             ylim = c(0, 6), 
+             ylab = "", xlab = "")
+        title(paste(1991+i, "Likelihood"), line = 3)
+    }
+    
+    axis(side = 1, at = seq(0.4, 1.3, by = 0.1))
+    abline(v = 0.8)
+    abline(v = 1.0)
+    psup <- pnorm(log(0.8), mean = loghr[i], sd = selh[i])
+    pequi <- pnorm(log(1), mean = loghr[i], sd = selh[i]) - pnorm(log(0.8), mean = loghr[i], sd = selh[i])
+    pinf <- 1 - psup - pequi
+    legend(x = 0.38, y = 9, bty = "n", cex = 1, legend = c("CHART superior", "Equivalent", "Control superior"), xpd=TRUE)
+    legend(x = 0.51, y = 9, bty = "n", cex = 1, legend = c(paste(round(psup, 3)), 
+                                                           paste(round(pequi, 3)), 
+                                                           paste(round(pinf, 3))), xpd=TRUE)
+    
+    # plot posterior
+    if(i == length(loghr)){
+        plot(x = exp(x), y = dnorm(x, mean = postmean[i], sd = postse[i]), log = "x", type = "l",
+             yaxt = "n", xaxt = "n", bty = "n",
+             ylim = c(0, 6),
+             ylab = "", xlab = "favours CHART   <-   Hazard ratio   ->   favours control", 
+             mgp=c(2,1,1))
+        title(paste(1991+i, "Posterior"), line = 3)
+    } else {
+        plot(x = exp(x), y = dnorm(x, mean = postmean[i], sd = postse[i]), log = "x", type = "l",
+             yaxt = "n", xaxt = "n", bty = "n",
+             ylim = c(0, 6),
+             ylab = "", xlab = "")
+        title(paste(1991+i, "Posterior"), line = 3)
+    }
+    
+    axis(side = 1, at = seq(0.4, 1.3, by = 0.1))
+    abline(v = 0.8)
+    abline(v = 1.0)
+    psup <- pnorm(log(0.8), mean = postmean[i], sd = postse[i])
+    pequi <- pnorm(log(1), mean = postmean[i], sd = postse[i]) - pnorm(log(0.8), mean = postmean[i], sd = postse[i])
+    pinf <- 1 - psup - pequi
+    legend(x = 0.38, y = 9, bty = "n", cex = 1, legend = c("CHART superior", "Equivalent", "Control superior"), xpd=TRUE)
+    legend(x = 0.51, y = 9, bty = "n", cex = 1, legend = c(paste(round(psup, 3)), 
+                                                           paste(round(pequi, 3)), 
+                                                           paste(round(pinf, 3))), xpd=TRUE)
+}
+dev.off()
+@
+
+% figure 6.9
+<<echo=FALSE, include=FALSE>>=
+zm <- seq(-1, 3, len = 1000)
+c <- 0.01
+
+p10 <- lapply(zm, FUN = classical_predictive_probability, fraction = TRUE, f = 0.1, eps = c)
+p25 <- lapply(zm, FUN = classical_predictive_probability, fraction = TRUE, f = 0.25, eps = c)
+p50 <- lapply(zm, FUN = classical_predictive_probability, fraction = TRUE, f = 0.5, eps = c)
+p75 <- lapply(zm, FUN = classical_predictive_probability, fraction = TRUE, f = 0.75, eps = c)
+p90 <- lapply(zm, FUN = classical_predictive_probability, fraction = TRUE, f = 0.9, eps = c)
+
+pdf(file = "./figure/ch07_fig_6-09.pdf", width = 9, height = 7)
+par(mfrow = c(1, 2), las=1)
+
+plot(x = zm, y = p10, type = "l",
+     ylim = c(0, 1),
+     xlab = "observed z statistic",
+     ylab = "predictive probability",
+     lty = "solid", col = coldef[1])
+lines(x = zm, y = p25, col = coldef[2])
+lines(x = zm, y = p50, col = coldef[3])
+lines(x = zm, y = p75, col = coldef[4])
+lines(x = zm, y = p90, col = coldef[5])
+title(expression(paste("a) ", epsilon, " = 0.005")))
+legend("topleft",
+       legend = c("f = 10%", "f = 25%", "f = 50%", "f = 75%", "f = 90%"),
+       lty = 1,
+       col = c(coldef), bty = "n", cex = 0.8)
+
+c <- 0.05
+
+p10 <- lapply(zm, FUN = classical_predictive_probability, fraction = TRUE, f = 0.1, eps = c)
+p25 <- lapply(zm, FUN = classical_predictive_probability, fraction = TRUE, f = 0.25, eps = c)
+p50 <- lapply(zm, FUN = classical_predictive_probability, fraction = TRUE, f = 0.5, eps = c)
+p75 <- lapply(zm, FUN = classical_predictive_probability, fraction = TRUE, f = 0.75, eps = c)
+p90 <- lapply(zm, FUN = classical_predictive_probability, fraction = TRUE, f = 0.9, eps = c)
+
+plot(x = zm, y = p10, type = "l",
+     ylim = c(0, 1),
+     xlab = "observed z statistic",
+     ylab = "predictive probability",
+     lty = "solid", col = coldef[1])
+lines(x = zm, y = p25, col = coldef[2])
+lines(x = zm, y = p50, col = coldef[3])
+lines(x = zm, y = p75, col = coldef[4])
+lines(x = zm, y = p90, col = coldef[5])
+title(expression(paste("b) ", epsilon, " = 0.025")))
+legend("topleft",
+       legend = c("f = 10%", "f = 25%", "f = 50%", "f = 75%", "f = 90%"),
+       lty = 1,
+       col = c(coldef), bty = "n", cex = 0.8)
+dev.off()
+@
+
+% figure 6.10
+<<echo=FALSE, include=FALSE>>=
+x <- seq(log(0.4), log(3), len = 1000)
+n0 <- 41.4
+sigma <- 2
+mu1 <- 0
+mu2 <- -0.51
+
+pdf(file = "./figure/ch07_fig_6-10.pdf", width = 8, height = 9)
+par(mfrow = c(6, 2), mar = c(3,0,4,0), las=1)
+
+frame()
+legend("top", bty = "n", legend = c("Optimistic Prior", "Sceptical Prior"), lty = c(2, 1), cex = 1.5)
+
+# Prior
+plot(x = exp(x), y = dnorm(x, mean = mu1, sd = sigma / sqrt(n0)), log = "x", type = "l", 
+     yaxt = "n", xaxt = "n", bty = "n", 
+     ylim = c(0, 3),
+     ylab = "", xlab = "")
+lines(x = exp(x), y = dnorm(x, mean = mu2, sd = sigma / sqrt(n0)), lty = 2)
+title("Prior", line = 3)
+axis(side = 1, at = seq(0.4, 3, by = 0.1))
+abline(v = 1.0)
+
+#likelihood
+logHR <- c(0.435, 0.567, 0.545, 0.588, 0.519)
+selogHR <- c(0.295, 0.244, 0.213, 0.198, 0.172)
+years <- c("1993", "1994", "June 1995", "Dec. 1995", "1996")
+
+#posterior
+m <- (sigma / selogHR)^2
+postmean1 <- (n0 * mu1 + m * logHR) / (n0 + m)
+postmean2 <- (n0 * mu2 + m * logHR) / (n0 + m)
+postse <- sigma / sqrt(n0 + m)
+
+for(i in 1:length(logHR)){
+    # plot likelihood
+    if(i == length(logHR)){
+        plot(x = exp(x), y = dnorm(x, mean = logHR[i], sd = selogHR[i]), log = "x", type = "l", 
+             yaxt = "n", xaxt = "n", bty = "n", 
+             ylim = c(0, 3),
+             ylab = "", xlab = "Tamoxifen superior   <-   Hazard ratio   ->   Control superior", 
+             mgp=c(2,1,1))
+        title(paste(years[i], "Likelihood"), line = 2)
+    } else {
+        plot(x = exp(x), y = dnorm(x, mean = logHR[i], sd = selogHR[i]), log = "x", type = "l", 
+             yaxt = "n", xaxt = "n", bty = "n", 
+             ylim = c(0, 3), 
+             ylab = "", xlab = "")
+        title(paste(years[i], "Likelihood"), line = 2)
+    }
+    axis(side = 1, at = seq(0.4, 3, by = 0.1))
+    abline(v = 1.0)
+    
+    # plot posterior
+    if(i == length(logHR)){
+        plot(x = exp(x), y = dnorm(x, mean = postmean1[i], sd = postse[i]), log = "x", type = "l",
+             yaxt = "n", xaxt = "n", bty = "n",
+             ylim = c(0, 3),
+             ylab = "", xlab = "Tamoxifen superior   <-   Hazard ratio   ->   Control superior", 
+             mgp=c(2,1,1))
+        lines(x = exp(x), y = dnorm(x, mean = postmean2[i], sd = postse[i]), lty = 2)
+        title(paste(years[i], "Posterior"), line = 2)
+    } else {
+        plot(x = exp(x), y = dnorm(x, mean = postmean1[i], sd = postse[i]), log = "x", type = "l",
+             yaxt = "n", xaxt = "n", bty = "n",
+             ylim = c(0, 3),
+             ylab = "", xlab = "")
+        lines(x = exp(x), y = dnorm(x, mean = postmean2[i], sd = postse[i]), lty = 2)
+        title(paste(years[i], "Posterior"), line = 2)
+    }
+    axis(side = 1, at = seq(0.4, 3, by = 0.1))
+    abline(v = 1.0)
+}
+dev.off()
+@
+
+% figure 6.11
+<<echo=FALSE, include=FALSE>>=
+# initialize plots
+pdf(file = "./figure/ch07_fig_6-11.pdf", width = 12, height = 8)
+par(mfcol = c(4, 3), mar = c(4,3,2,1), las=1)
+
+# Hr for reference, sceptical and optimistic posterior
+n0 <- 41.4
+sigma <- 2
+mu1 <- 0
+mu2 <- -0.51
+n <- 69
+m <- 46
+lHR_ref <- 0.435
+selHR_ref <- 0.295
+
+lHR_scept <- (n0 * mu1 + m * lHR_ref) / (n0 + m)
+lHR_opt <- (n0 * mu2 + m * lHR_ref) / (n0 + m)
+postse <- sigma / sqrt(n0 + m)
+
+logHR <- c(lHR_ref, lHR_scept, lHR_opt)
+selogHR <- c(selHR_ref, postse, postse)
+
+theta <- seq(log(0.4), log(3), len = 1000)
+
+n_prior <- c(0, 41.4, 41.4)
+mu_prior <- c(0, 0, -0.51)
+
+title <- c("Reference analysis: posterior", "Sceptical analysis: posterior", "Optimisitc analysis: posterior")
+c <- c(1, coldef[1], coldef[5])
+
+for(i in 1:3){
+  Csup <- sapply(theta, FUN = bayesian_conditional_pwr, 
+                 n0 = n_prior[i], mu = mu_prior[i], m = m, ym = lHR_ref, n = n, eps = 0.025)
+  Tsup <- 1 - sapply(theta, FUN = bayesian_conditional_pwr, 
+                     n0 = n_prior[i], mu = mu_prior[i], m = m, ym = lHR_ref, n = n, eps = 0.975)
+  Equi <- 1 - Csup - Tsup
+  
+  plot(x = exp(theta), y = dnorm(theta, mean = logHR[i], sd = selogHR[i]), 
+       log = "x", type = "l", lwd = 2,
+       yaxt = "n", xaxt = "n", bty = "n", col = c[i],
+       ylim = c(0, 3), ylab = "", xlab = "")
+  axis(side = 1, at = seq(0.4, 3, by = 0.2), cex.axis = 0.8)
+  abline(v = 1.0)
+  title(title[i], cex.main=1.2)
+  
+  plot(exp(theta), Tsup, type = "l", log = "x", lwd = 2,
+       ylim = c(0,1), xlim = c(0.4, 3), col = c[i],
+       xaxt = "n", bty = "n", las=1, cex.axis = 0.8,
+       ylab = "", xlab = "")
+  axis(side = 1, at = seq(0.4, 3, by = 0.2), cex.axis = 0.8)
+  abline(v = 1.0)
+  title("Probability of concluding 'Tamoxifen superior'", cex.main=1, font.main = 1)
+  
+  plot(exp(theta), Equi, type = "l", log = "x", lwd = 2,
+       ylim = c(0,1), xlim = c(0.4, 3), col = c[i],
+       xaxt = "n", bty = "n", las=1, cex.axis = 0.8,
+       ylab = "", xlab = "")
+  axis(side = 1, at = seq(0.4, 3, by = 0.2), cex.axis = 0.8)
+  abline(v = 1.0)
+  title("Probability of concluding 'Equivocal'", cex.main=1, font.main = 1)
+  
+  plot(exp(theta), Csup, type = "l", log = "x", lwd = 2,
+       ylim = c(0,1), xlim = c(0.4, 3), col = c[i],
+       xaxt = "n", bty = "n", las=1, cex.axis = 0.8,
+       ylab = "", xlab = "Tamoxifen superior   <-   Hazard ratio   ->   Control superior")
+  axis(side = 1, at = seq(0.4, 3, by = 0.2), cex.axis = 0.8)
+  abline(v = 1.0)
+  title("Probability of concluding 'Control superior'", cex.main=1, font.main = 1)
+}
+
+dev.off()
+@
+
+
+\appChapter{RCTs II: Sequential trials}{Katrin}{Petermann}
+
+\section{Monitoring of sequential trials}
+\label{sec:6.6}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%% subsection 6.6.1 %%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Introduction}
+\label{sec:6.6.1}
+
+Large clinical trials usually follow a sequential experimental design. The acquired data is periodically analyzed in interim analyses and the study is stopped if sufficiently convincing results are available. Independent data monitoring committees (DMC) gather all relevant information whether a clinical trial should be stopped or continued. Statistical calculations might show that adding more data does not change the final result. DMCs also consider ethical, financial, organizational and scientific reasons to stop a trial. Let's look at two examples:
+
+\begin{itemize}
+    
+    \item The first double-blind, placebo-controlled trial on HIV-positive patients with an antiviral drug AZT (azidothymidine, also known as zidovudine or ZDV) was stopped early because of convincing evidence that patients on the treatment do significantly better than patients on placebo \citep{azt-trial}. Obviously there were ethical considerations leading to making the drug available to all HIV patients.
+    
+    \item The randomized sham-controlled trial of deep brain stimulation for treatment-resistant depression was stopped early because there was no difference between sham and stimulation \citep{dbs-depression}. All patients did significantly better compared to baseline, showing a huge placebo effect.
+
+\end{itemize}
+
+The following statistical approaches for monitoring of sequential trials can be identified:
+
+\begin{itemize}
+    
+    \item \emph{Fisherian}. The DMC should recommend to stop a clinical trial if there is both:
+    \begin{description}
+        \item[a)] proof beyond reasonable doubt that one particular treatment is clearly indicated
+        \item[b)] evidence that might influence the patient management
+    \end{description}
+    \item \emph{Neyman-Pearson}. This method attempts to retain a fixed Type I error through predefined stopping boundaries. See figure \ref{fig:6.6} for some examples. Such stopping boundaries are "prone to exaggerate the magnitude of treatment effect", since they would tend to stop when on a random high \citep{pocock1989}.
+    \item \emph{Proper Bayesian}. Interim analyses are conducted based on a posterior distribution. See section \ref{sec:6.6.2}. Theoretically it is not necessary to pre-specify a stopping criterion or even a sample size. In practice however, ethical committees demand these parameters before conducting a trial.
+    \item \emph{Decision-theoretic Bayesian}. This approach assumes we are willing to explicitly assess the losses associated with consequences of stopping or continuing the study.
+    
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%% subsection 6.6.2 %%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Monitoring using the posterior distribution}
+\label{sec:6.6.2}
+
+Following a \emph{proper Bayesian} approach, we would decide to terminate a trial if we are confident, that one treatment is better than the other. We distinguish between the following two situations:
+
+\begin{itemize}
+    \item First, stopping in favor of the new treatment: if a posterior distribution based on a sceptical prior suggests a high probability of a treatment effect. In other words, convincing a reasonable adversary that they are wrong.
+    \item Second, stopping when both treatments are equivocal or in favor of control: if a posterior distribution based on a enthusiastic prior rules out a treatment benefit. In other words, convincing a reasonable supporter that they are wrong.
+\end{itemize}
+
+How do we define the boundaries for stopping a trial in the first situation? \newline
+We previously defined the event $S_\epsilon^B:P(\theta<0 \given \text{data})<\epsilon$. From equation \eqref{eq6.5} it follows that for a retrospective assessment of observed data the event will occur if the parameter estimate $y_m$ obeys
+
+\begin{align}
+	y_m > \frac{-\sqrt{n_0 + m} z_\epsilon \sigma - n_0 \mu}{m}
+	\label{eq:6.9}
+\end{align}
+ 
+ Suppose we assume a sceptical prior for a treatment difference $\theta\sim \Nor \left[0,\frac{\sigma^2}{n_0} \right]$, then $S_\epsilon^B$ occurs when
+ 
+ \begin{align}
+		y_m > \frac{-\sqrt{n_0 + m} z_\epsilon \sigma}{m}
+	\label{eq:6.10}
+\end{align}
+
+Let $z_m=y_m \sqrt{m} / \sigma$ be a standardized test statistic, then equation \eqref{eq:6.10} can be rearranged to equation \eqref{eq:6.11}, defining the Bayesian boundary for stopping a trial and rejecting $H_0$. 
+
+\begin{align}
+	z_m > - z_\epsilon \sqrt{1+\frac{n_0}{m}}.
+	\label{eq:6.11}
+\end{align}
+
+In section \ref{sec:5.5.2} we defined the \emph{handicap} as ${n_0}/{n}$, where $n_0$ is the prior sample size and $n$ the planned maximum experimental sample size. We can rearrange equation \eqref{eq:6.11} to include the \emph{handicap} as follows. 
+
+\begin{align}
+	z_m > - z_\epsilon \sqrt{1+\frac{n_0}{n}\frac{n}{m}}.
+	\label{eq:6.11.2}
+\end{align}
+
+Now we are able to define the Bayesian boundary as a function of the proportion of the trial completed ${m}/{n}$. Equations \eqref{eq:6.11} and \eqref{eq:6.11.2} are implemented in the function \texttt{bayesian\_boundary()} described in section \ref{code:bayesian_boundary}.\\
+See section \ref{sec:6.6.5} for more information about the choice of an appropriate \emph{handicap}.
+
+% figure 6.6
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\textwidth]{./figure/ch07_fig_6-06.pdf}
+\caption{Boundaries for a sceptical prior opinion with $2\epsilon=0.05$ hence $-z_\epsilon=1.96$ and handicap $n_0 / n=0.26$. This is compared to Pocock \citep{pocock1977} and O'Brien-Fleming \citep{obrien1979} boundaries assuming five equally spaced analyses, and the Haybbittle-Peto boundary \citep{haybittle1971} in which a difference of three standard errors is sought at all interim analyses, and then an unadjusted P-value adopted at the end of trial. The figure has been created using the function \texttt{bayesian\_boundary()} described in section \ref{code:bayesian_boundary}.}
+\label{fig:6.6}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% Example 6.6 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{example} \label{ex:6.6}
+CHART lung cancer trial: Monitoring using a sceptical prior.
+
+\subsubsection*{Reference}
+
+\citet{parmar1994}, \citet{parmar2001}, \citet{spiegelhalter1994}.
+
+\subsubsection*{Description of Study}
+Compared to standard radiotherapy, continuous hyperfractionated accelerated radio therapy (CHART) applies many small fractions of radiation over a shortened period of time. The trials were conducted to study survival of patients with lung or head-and-neck cancer. Patients were randomized in the proportion 60:40 in favor of CHART, with planned annual interim analyses. Here we only look at the lung cancer data.
+
+\subsubsection*{Evidence}
+The data reported at each of the annual meetings to the independent DMC is shown in table \ref{tab:6.3}. Recruitment was stopped in 1995 after 563 patients had entered the trial. The DMC recommended continuation of the trial even when the two-sided P-value was 0.001 in 1993.
+
+\begin{table}[ht] 
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{cccccccc}
+\hline
+Date & Patients & Deaths & \multicolumn{2}{l}{Hazard ratio} & \multicolumn{2}{l}{2-year \% survival improvement} & Two-sided \\ \cline{4-7}
+     &       &        & Estimate    & 95\% CI      & Estimate   & 95\% CI  & P-value   \\ \hline
+<<echo=FALSE,results='asis'>>=
+tab.6.3 <- data.frame("date" = c(1992, 1993, 1994, 1995, 1996), 
+                      "Patients" = c(256, 380, 460, 563, 563), 
+                      "Deaths" = c(78, 192, 275, 379, 444), 
+                      "HR" = c(0.55, 0.63, 0.70, 0.75, 0.76), 
+                      "HRCI" = c("0.35 \\mbox{to} 0.86", "0.47 \\mbox{to} 0.83", "0.55 \\mbox{to} 0.90", "0.61 \\mbox{to} 0.93", "0.63 \\mbox{to} 0.90"), 
+                      "SI" = c(20, 15, 12, 9, 9), 
+                      "SICI" = c("5 \\mbox{to} 36", "6 \\mbox{to} 26", "4 \\mbox{to} 20", "3 \\mbox{to} 16", "3 \\mbox{to} 15"), 
+                      "p" = c(0.007, 0.001, 0.003, 0.004, 0.003))
+
+print(xtable(tab.6.3, digits = c(0, 0, 0, 0, 2, 0, 0, 0, 3)),
+      include.rownames = FALSE,
+      include.colnames = FALSE,
+      hline.after = NULL,
+      only.contents = TRUE,
+      sanitize.text.function = function(x){x})
+@
+     
+\hline
+\end{tabular}}
+\caption{Summary data reported at each meeting of the CHART trial DMC}
+\label{tab:6.3}
+\end{table}
+
+\subsubsection*{Bayesian Interpretation}
+For the lung cancer trial, in view of the positive findings, the DMC was presented with the posterior distribution resulting from a sceptical prior. They were asked to check if there is sufficient evidence to persuade a reasonable sceptic. Figure \ref{fig:6.7} shows the prior, likelihood and posterior distributions for each interim analysis. The early likelihood tends to overestimate the effect, resulting in a two-sided p-value of 0.001 in 1993. The two-sided p-value of 0.001 corresponds to the Haybittle-Peto bound for all interim analyses except the last one. See figure \ref{fig:6.6} and \cite{haybittle1971}. Compared to the likelihood, the posterior distribution if remarkably stable.
+
+\subsubsection*{Comments}
+While classical stopping rules may have led the DMC to stop the lung trial earlier, the posterior distribution based on a sceptical prior did not support the early results. The DMC allowed to continue the trial resulting in a strong result after 5 years and 563 enrolled patients. This decision needs to be weighted against a large number of patients not receiving the best medical treatment while the study is ongoing and high costs of such a study with money that could have been used elsewhere. \newline
+Results in figure \ref{fig:6.7} deviate slightly from the book, because the curves were calculated from rounded HR in table \ref{tab:6.3}.
+\end{example}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width = \textwidth]{./figure/ch07_fig_6-07.pdf}
+\caption{Prior, likelihood and posterior distributions for the lung cancer trial assuming a sceptical prior. The hazard ratio of 0.80 is based on a 7\% improvement in 2-year survival rate. Results deviate slightly from the book, because the curves were calculated from rounded HR in table \ref{tab:6.3}.}
+\label{fig:6.7}
+\end{figure}
+\clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%% subsection 6.6.3 %%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Monitoring using predictions: \emph{interim power}}
+\label{sec:6.6.3}
+
+Investigators are often concerned with the question \emph{"given the data so far, what is the chance of getting a significant result?"}. We introduce the term \emph{interim power} as the conditional power of the study, given the data so far, for a range of alternative hypotheses. In the following paragraphs we are interested in predicting whether future data will result in a posterior probability, or a one sided p-value smaller than $\epsilon$ for the null hypothesis $H_0:\theta<0$. We previously defined these events as $S_\epsilon^B$ for \emph{Bayesian significance} and $S_\epsilon^C$ for \emph{classical significance}. \newline
+As before, we assume a normal likelihood for $Y_n$ and $Y_m$, i.e.
+
+\begin{align*}
+Y_n \sim \Nor \left[\theta, \frac{\sigma^2}{n}\right] \text{and } Y_m \sim \Nor \left[\theta, \frac{\sigma^2}{m}\right]
+\end{align*}
+
+\subsubsection{Hybrid Predictions}
+
+\emph{Using a prior and current data to predict a future classical analysis.} \newline
+Suppose we have observed data with sample size m leading to a parameter estimate $y_m$. And we are considering a further n observations with parameter estimate $Y_n$. Then
+
+\begin{align*}
+    \frac{m y_m + n Y_n}{m + n} \sim \Nor \left[\theta, \frac{\sigma^2}{m + n} \right],
+\end{align*}
+
+which leads to a classical significant result $S_\epsilon^C$ if 
+
+\begin{align}
+    Y_n > \frac{-\sqrt{m + n} z_\epsilon \sigma - m y_m}{n}.
+    \label{eq:6.13}
+\end{align}
+
+Thus, the probability of $S_\epsilon^C$ occurring, given the observed data and unknown $\theta$, is
+
+\begin{align}
+    \Pr(S_\epsilon^C  \given  y_m, \theta) = \Phi \left[\frac{\sqrt{n} \theta}{\sigma} + \frac{m y_m}{\sigma \sqrt{n}} + \sqrt{\frac{m + n}{n}} z_\epsilon \right].
+    \label{eq:6.14}
+\end{align}
+
+Equation
+Equation \eqref{eq:6.14} is called the \emph{conditional power curve}. We note, that this is equivalent to using the \emph{data so far} as a prior for a Bayesian prediction and calculating the Bayesian power curve in equation \eqref{eq6.6}. 
+Since it does not seem reasonable to condition on a hypothesis that is no longer tenable, \emph{i.e} $\theta$, we are interested in the unconditional probability of $S_\epsilon^C$. The conditional power curve is averaged with respect to the current posterior distribution, which leads to 
+
+\begin{multline}
+    \Pr(S_\epsilon^C  \given  y_m, \text{prior}) = \Phi \bigg[\sqrt{\frac{n_0 n}
+    {(n_0 + m) (n_0 + m + n)}} \frac{\sqrt{n_0} \mu}{\sigma} \\
+    + \sqrt{\frac{m (n_0 + m + n)}{n (n_0 + m)}} \frac{\sqrt{m} y_m}{\sigma}
+    + \sqrt{\frac{(m + n)(n_0 + m)}{n (n_0 + m + n)}} z_\epsilon \bigg].
+    \label{eq:6.15}
+\end{multline}
+
+Equation \eqref{eq:6.15} has been implemented in the function \texttt{hybrid\_predictive\_probability()} described in section \ref{code:hybrid_predictive_probability}.
+
+\subsubsection{Bayesian Predictions}
+
+\emph{Using a prior and current data to predict a future Bayesian analysis.} \newline
+In a Bayesian prediction, the posterior distribution will eventually be
+
+\begin{align*}
+    \theta  \given  y_m, Y_n \sim \Nor \left[\frac{n_0 \mu + m y_m + n Y_n}{n_0 + m + n}, \frac{\sigma^2}{n_0 + m + n} \right].
+\end{align*}
+
+The significant result $S_\epsilon^B$ is defined as the event $\Pr(\theta < 0  \given  y_m, Y_n) < \epsilon$. In other words, the tail area of the posterior is less than $\epsilon$. This result will occur if 
+
+\begin{align}
+    Y_n > \frac{-\sqrt{n_0 + m + n} z_\epsilon \sigma - (n_0 \mu + m y_m)}{n}.
+    \label{eq:6.16}
+\end{align}
+
+Again, since $Y_n$ is normally distributed with mean $\theta$ and variance $\sigma^2/n$, the probability of $S_\epsilon^B$ occurring is
+
+\begin{align}
+    \Pr(S_\epsilon^B  \given  y_m, \theta) = \Phi \left[\frac{\sqrt{n} \theta}{\sigma} + \frac{m y_m}{\sigma \sqrt{n}} + \frac{n_0 \mu}{\sigma \sqrt{n}} + \sqrt{\frac{n_0 + m + n}{n}} z_\epsilon \right].
+    \label{eq:6.17}
+\end{align}
+
+Equation \eqref{eq:6.17} is implemented in the function \texttt{bayesian\_conditional\_pwr()} described in section \ref{code:bayesian_conditional_pwr}.\\
+Let's have a closer look at this conditional power curve. It can be thought of as a general form of all other power curves previously defined:
+
+\begin{itemize}
+    \item if \emph{$n_0 = 0$} we have no prior distribution and we obtain equation \eqref{eq:6.14}, the classical conditional power curve.
+    \item if \emph{$m = 0$} we have no data collected so far and we obtain equation \eqref{eq6.6}, the Bayesian power curve.
+    \item if \emph{$n_0 = 0$} and \emph{$m = 0$} we obtain equation \eqref{eq6.3}, the standard power curve.
+\end{itemize}
+
+Now, if we want the unconditional probability of $S_\epsilon^B$, we use equation \eqref{eq:3.23} for the predictive distribution of $Y_n$ and get
+
+\begin{align}
+    \Pr(S_\epsilon^B  \given  y_m, \text{prior}) = \Phi \left[\frac{\sqrt{n_0 + m + n}}{\sqrt{(n_0 + m) n}} \frac{(n_0 \mu + m y_m)}{\sigma} + \sqrt{\frac{n_0 + m}{n}} z_\epsilon \right].
+    \label{eq:6.18}
+\end{align}
+
+Equation \eqref{eq:6.18} has been implemented in the function \texttt{bayesian\_predictive\_probability()} described in section \ref{code:bayesian_predictive_probability}.
+
+
+\subsubsection{Classical Predictions}
+
+\emph{Using only current data to predict a future classical analysis.} \newline
+
+We can ignore the prior opinion by simply setting $n_0 = 0$ in equations \eqref{eq:6.15} or \eqref{eq:6.18} to get the predictive probability of $S_\epsilon^C$ as
+
+\begin{align}
+    \Pr(S_\epsilon^C  \given  y_m) = \Phi \left[\frac{\sqrt{m + n}}{\sqrt{n}} \frac{\sqrt{m} y_m}{\sigma} + \sqrt{\frac{m}{n}} z_\epsilon \right].
+    \label{eq:6.19}
+\end{align}
+
+Now let Let $z_m = y_m \sqrt{m} / \sigma$ be the standardized test statistic, and $f = m/(m+n)$ the fraction of the trial so far completed. Then equation \eqref{eq:6.19} can be rewritten as
+
+\begin{align}
+    \Pr(S_\epsilon^C  \given  y_m) = \Phi \left[\frac{z_m + \sqrt{f} z_\epsilon}{\sqrt{1-f}} \right].
+    \label{eq:6.20}
+\end{align}
+
+This result helps us to justify if a trial should be stopped or continued, given the test statistic $z_m$ and the fraction $f$ of the trial completed. Figure \ref{fig:6.9} illustrates how this result can be interpreted.\\
+The function \texttt{classical\_predictive\_probability()} is the implementation of equations \eqref{eq:6.19} and \eqref{eq:6.20} described in section \ref{code:classical_predictive_probability}.
+
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width = \textwidth]{./figure/ch07_fig_6-09.pdf}
+\caption{Predictive probability from equation \eqref{eq:6.20} of obtaining a classically significant result. For example, if one is half-way through a study ($f=50\%$), and the test statistic of the treatment effect is currently $z_m = 1$ , then based on this information alone, there is only a 29\% chance that the trial will show a significant benefit of treatment (two-sided $P=0.05$). The figure has been created using the function \texttt{classical\_predictive\_probability()} described in section \ref{code:classical_predictive_probability}.}
+\label{fig:6.9}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% Example 6.7 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{example}
+\label{ex:6.7}
+B-14: Using prediction to monitor a trial
+
+\subsubsection*{Reference}
+\citet{dignam1998}.
+
+\subsubsection*{Description of Study}
+Several randomized clinical trials in the 1980s reported benefit from using tamoxifen in the treatment of early-stage breast cancer. This study wanted to estimate the disease-free survival benefit from using tamoxifen. They randomized former breast-cancer patients who had completed 5 years free of breast cancer recurrence and were already taking tamoxifen to either tamoxifen or placebo for an additional 5 years.
+
+\subsubsection*{Evidence}
+An enthusiastic and a sceptical prior were adopted as shown in figure \ref{fig:6.10}. \newline
+\emph{Enthusiastic Prior:} centered on a 40\% hazard reduction and a 5\% chance of a negative effect (i.e. $\text{HR} > 1$), equivalent to a normal prior on the \emph{log(HR)-scale} with mean $-0.51$ and standard deviation $0.31$. \newline
+\emph{Sceptical Prior:} centered at 0 with the same standard deviation 0.31.\newline
+The data is shown in table \ref{tab:6.6}. Unexpectedly, the results favored the control treatment (no tamoxifen). At the third interim analysis the DMC decided to stop the trial with the following explanation: 88 of the planned 115 events had been observed, and even if all 27 remaining events occurred in the control arm and none in the treatment arm, the final results would still favor the control.
+
+\begin{table}[ht]
+\resizebox{\textwidth}{!}{
+\begin{tabular}{ccccccccc}
+\hline
+Date  &      & Events on & Events on & \multicolumn{2}{c}{Estimated} & \multicolumn{2}{c}{Estimated} & Two-sided \\
+      &      & Placebo   & Tamoxifen & log(HR) & SD                & HR & 95\% CI                & P-value  \\ \hline
+<<echo=FALSE, results='asis'>>=
+tab.6.6 <- data.frame("months" = c("Sept.", "Sept.", "June", "Dec.", "Dec."),
+                      "year" = c(1993, 1994, 1995, 1995, 1996),
+                      "events_placebo" = c(18, 24, 32, 36, 50),
+                      "events_treatment" = c(28, 43, 56, 66, 85),
+                      "logHR" = c(0.435, 0.567, 0.545, 0.588, 0.519),
+                      "logHRSD" = c(0.295, 0.244, 0.213, 0.198, 0.172),
+                      "HR" = c(1.54, 1.76, 1.72, 1.80, 1.68),
+                      "HRCI" = c("0.87 \\mbox{to} 2.75", "1.09 \\mbox{to} 2.85", "1.14 \\mbox{to} 2.62", "1.22 \\mbox{to} 2.65", "1.20 \\mbox{to} 2.35"),
+                      "p-value" = c(0.140, 0.020, 0.010, 0.003, 0.003))
+
+print(xtable(tab.6.6, digits = c(0, 0, 0, 0, 0, 3, 0, 2, 0, 3)),
+      include.rownames = FALSE,
+      include.colnames = FALSE,
+      hline.after = NULL,
+      only.contents = TRUE,
+      sanitize.text.function = function(x){x})
+@
+\hline
+\end{tabular}}
+\caption{Summary data from the B-14 trial.}
+\label{tab:6.6}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width = \textwidth]{./figure/ch07_fig_6-10.pdf}
+\caption{Sceptical and optimistic prior distributions, likelihoods and posterior distributions for the B-14 trial. The strong likelihood brings reasonable supporters and adversaries into agreement.}
+\label{fig:6.10}
+\end{figure}
+\clearpage
+
+\subsubsection*{Bayesian Interpretation}
+The trial was analysed using conditional power curves and predictive probabilities in a \emph{classical}, a \emph{hybrid} and a \emph{Bayesian} approach. Figure \ref{fig:6.11} shows the conditional power curves for different prior assumptions. For true hazard ratios greater than 1.5, the chance of concluding in favor of control is quite substantial. The chance of concluding in favor of treatment is negligible unless the true hazard ratio is as small as 0.4. However, such small hazard ratios are excluded by the reference posterior. \newline
+Predictive probabilities calculated in 1993 showed a clear trend towards concluding \emph{equivocal} or \emph{control superior}. The probability of concluding \emph{tamoxifen superior} is negligible. \newline
+
+\begin{table}[ht]
+    \centering
+    % \resizebox{\textwidth}{!}{%
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{lccccc}
+        \hline 
+        \textbf{Final conclusion} & \textbf{Classical} & \multicolumn{2}{c}{\textbf{Bayesian}} & \multicolumn{2}{c}{\textbf{Hybrid}} \\
+        \cline{3-6}
+        & & Sceptical & Optimistic & Sceptical & Optimistic \\
+        \hline 
+<<echo=FALSE,results='asis'>>=
+
+tab.6.7 <- data.frame("Final conclusion" = c("Control superior", "Equivocal", "Tamoxifen superior"))
+
+n0 <- 41.4
+mu_opt <- -0.51
+mu_scept <- 0
+m <- 46
+ym <- 0.435
+n <- 69
+sd <- 2
+eps <- 0.025
+
+# classical predictive probability
+tab.6.7$reference <- hypothesis_reversal(classical_predictive_probability, 
+                                     ym = ym, m = m, n = n, sd = sd, eps = eps)
+
+# bayesian predictive probability: sceptcal prior
+tab.6.7$bayesian_scept <- hypothesis_reversal(bayesian_predictive_probability, 
+                                         n0 = n0, mu = mu_scept, ym = ym, 
+                                         m = m, n = n, sd = sd, eps = eps)
+
+# bayesian predictive probability: optimistic prior
+tab.6.7$bayesian_opt <- hypothesis_reversal(bayesian_predictive_probability, 
+                                         n0 = n0, mu = mu_opt, ym = ym, 
+                                         m = m, n = n, sd = sd, eps = eps)
+
+# hybrid predictive probability: sceptcal prior
+tab.6.7$hybrid_scept <- hypothesis_reversal(hybrid_predictive_probability, 
+                                       n0 = n0, mu = mu_scept, 
+                                       ym = ym, m = m, n = n, 
+                                       sd = sd, eps = eps)
+
+# bayesian predictive probability: optimistic prior
+tab.6.7$hybrid_opt <- hypothesis_reversal(hybrid_predictive_probability, 
+                                       n0 = n0, mu = mu_opt, 
+                                       ym = ym, m = m, n = n, 
+                                       sd = sd, eps = eps)
+
+tab_caption <- "Probabilities"
+print(xtable(tab.6.7, digits = 3),
+      include.rownames = FALSE,
+      include.colnames = FALSE,
+      hline.after = NULL,
+      only.contents = TRUE
+)
+@
+        \hline
+    \end{tabular}%}
+\caption{Probabilities of eventual conclusions for the B-14 trial at the first interim analysis in 1993. Probabilities are calculated using equation \eqref{eq:6.19} for the classical predictive probability, equation \eqref{eq:6.15} for the Bayesian predictive probability and equation \eqref{eq:6.18} for the hybrid predictive probability. The table has been created using the functions \texttt{bayesian\_predictive\_probability(), classical\_predictive\_probability()} and \texttt{hybrid\_predictive\_probability()}, described in section \ref{code:classical_predictive_probability}. For the reversal of hypothesis, the function \texttt{hypothesis\_reversal()} from section \ref{code:hypothesis_reversal} has been used.}
+\label{tab:6.7}
+\end{table}
+
+\subsubsection*{Comments}
+When looking at the likelihood and the corresponding posterior distributions, it is clear that already at the first interim analysis, one could have concluded that control is at least as good as treatment - if not better. As can be seen in table \ref{tab:6.7} the predictive probabilities for eventually concluding "tamoxifen superior" are very close to zero already in 1993. Considering the fact, that the treatment was harmful for patients, causing more recurrence of breast cancer than no tamoxifen, it is surprising that recruitment for the trial was continued for another two years.
+
+\begin{landscape}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=1.3\textwidth]{./figure/ch07_fig_6-11.pdf}
+\caption{Alternative predictions that could be made at the first interim analysis in 1993. The first row shows the posterior distributions for the reference analysis (data alone), and the posterior distributions originating from a sceptical and an optimistic prior. The corresponding power curves show probabilities for concluding \emph{tamoxifen superior}, \emph{equivocal} or \emph{control superior}. The figure has been created using the function \texttt{bayesian\_conditional\_pwr()} described in section \ref{code:bayesian_conditional_pwr}.}
+\label{fig:6.11}
+\end{figure}
+\end{landscape}
+
+\end{example}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%% subsection 6.6.4 %%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Frequentist properties of sequential Bayesian methods}
+\label{sec:6.6.5}
+
+In section \ref{sec:5.5.2} we saw that a reasonable \emph{handicap} $\frac{n_0}{n}$ might be 0.257, where $n_0$ is the prior sample size and $n$ the planned maximum experimental sample size. \citet{grossman1994} estimate by simulation the values for the \emph{handicap} that would give rise to an overall Type I error of 5\% and 1\% for different numbers of equally spaced interim analyses. Table \ref{tab:6.8} shows that the \emph{handicap} is fairly stable over a range of planned interim analyses. The handicap, adjusted for the planned number of interim analyses is the used to calculate the \emph{Bayesian boundary} in section \ref{sec:6.6.2} and equation \eqref{eq:6.11}.
+
+\begin{table}[hb]
+\centering
+\begin{tabular}{lcc}
+\hline
+Number of analyses & \emph{Handicap} for            & \emph{Handicap} for         \\
+                   & two-sided $\alpha = 0.05$      & two-sided $\alpha = 0.01$   \\ \hline
+<<echo=FALSE, results='asis'>>=
+tab.6.8 <- data.frame("nb" = seq(1:10),
+                      "handicap005" = c(0, 0.16, 0.22, 0.25, 0.27, 0.29, 0.30, 0.32, 0.33, 0.33),
+                      "handicap001" = c(0, 0.11, 0.15, 0.17, 0.18, 0.20, 0.21, 0.22, 0.22, 0.23))
+
+print(xtable(tab.6.8, digits = c(0, 0, 2, 2)),
+      include.rownames = FALSE,
+      include.colnames = FALSE,
+      hline.after = NULL,
+      only.contents = TRUE)
+@
+\hline
+\end{tabular}
+\caption{Handicaps to fix Type I error rate when using a sceptical prior for different number of interim analyses.}
+\label{tab:6.8}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%% subsection 6.6.5 %%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Bayesian methods and data monitoring committees}
+\label{sec:6.6.6}
+The advantages of using a Bayesian approach for data monitoring are the ability of using external evidence as a basis for a prior, and the possibility to take into account a wide range of clinical opinions through sceptical and enthusiastic priors. \newline
+At any interim analysis, the DMC is charged with making recommendations concerning the continuation of the clinical trial. Possible suggestions are summarized below:
+
+\begin{itemize}
+    \item \emph{The study should stop completely.} In example \ref{ex:6.7} we saw how an enthusiastic and an sceptical prior both led to the same conclusion. Even when considering possible future data, the result was still in favor of the control group, and thus the study was stopped. In general, a study should be stopped whenever there is enough evidence for or against a treatment to convince enthusiasts and adversaries alike.\newline
+    An other reason for stopping a trial, are safety concerns. However, in practice the safety of a treatment is usually assessed in a preliminary safety study, before conducting a RCT.
+    \item \emph{Part of the study should stop.} The DMC can make recommendations to stop randomization for a subgroup of patients or for a particular arm in a multi-arm study. Again, the decision might be based on posterior distributions, to evaluate at what extend the available data is likely to convince a wide range of clinical opinions.
+    \item \emph{The study should continue with modifications.} Additional interim analyses, increasing patients numbers or extending follow up time can have serious implications for frequentist designs. Since until today most clinical studies rely on frequentist designs, this scenario is rarely seen in practice. However, a Bayesian analysis is unaffected by such decisions and might give a DMC more freedom to adapt a trial. 
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% R-Code %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{R Code}
+Throughout chapter \ref{sec:6.6} various \textsf{R} functions implemented in the \texttt{bayesianBiostatUZH} package were used and will be briefly described in this section.
+
+\subsection{Monitoring Boundary}
+\label{code:bayesian_boundary}
+The Bayesian monitoring boundary can be calculated according to equation \eqref{eq:6.11}. Depending on the number of planned interim analyses, we would adjust the \emph{handicap} as described in section \ref{sec:6.6.5}. With a \emph{handicap} of 0.26 and a confidence level of 0.05, we can reproduce the numbers in figure \ref{fig:6.6}:
+
+<<>>=
+n = 10 # total sample size
+m = 2 # samples collected so far
+# m/n is the proportion of the trial completed
+bayesian_boundary(n, m, handicap = 0.26, conf.level = 0.05)
+@
+
+
+\subsection{Bayesian Conditional Power}
+\label{code:bayesian_conditional_pwr}
+Equation \eqref{eq:6.17} is implemented in the function \texttt{bayesian\_conditional\_pwr}. It returns the Bayesian conditional power as plotted in figure \ref{fig:6.11}. The implemented formula can be thought of as a general form of other power curves:
+\begin{itemize}
+  \item if $n_0 = 0$ we have no prior input and we obtain the classical conditional power curve in equation \eqref{eq:6.14}
+  \item if $m = 0$ we obtain the Bayesian power curve in equation \eqref{eq6.6}.
+  \item if $n0 = 0$ and $m = 0$ we obtain the standard power curve in equation \eqref{eq6.3}.
+\end{itemize}
+
+\begin{center}
+<<bayesian_conditional_pwr, fig.width=4, fig.height=4>>=
+par(las=1)
+theta <- seq(log(0.4), log(3), len = 1000)
+control_superior <- sapply(theta, FUN = bayesian_conditional_pwr, 
+                           n0 = 0, mu = 0, m = 46, ym = 0.435, 
+                           n = 69, eps = 0.025)
+plot(exp(theta), control_superior, type = "l", log = "x")
+@
+\end{center}
+
+\subsection{Predictive Probabilities}
+The predictive probabilities from table \ref{tab:6.7} can be calculated with the following functions.
+
+\subsubsection*{Classical Predictive Probability}
+\label{code:classical_predictive_probability}
+This is the implementation of equations \eqref{eq:6.19} and \eqref{eq:6.20}. It can be used with either sample sizes $m$ and $n$ and outcome estimates $y_m$ as in equation \eqref{eq:6.19} or with fraction of trial completed $f$ and the standardized test statistic $z_m$ as in equation \eqref{eq:6.20} and shown in figure \ref{fig:6.9}.
+
+<<>>=
+# implementation using sample size m and n and outcome estimate y_m
+# using the function with fraction = FALSE
+classical_predictive_probability(fraction = FALSE, m = 46, ym = 0.435, 
+                                 n = 69, sd = 2, eps = 0.025)
+@
+
+<<>>=
+# implementation using fraction of trial completed and 
+# standardized test statistic
+# using the function with fraction = TRUE
+classical_predictive_probability(fraction = TRUE, f = 46/(46+69), 
+                                 zm = 0.435/0.295, eps = 0.025)
+@
+
+\subsubsection*{Hybrid Predictive Probability}
+\label{code:hybrid_predictive_probability}
+This is the implementation of equation \eqref{eq:6.15}. It was used to calculate the results in table \ref{tab:6.7}. Here we are using the sceptical prior with $\text{mean} = 0$ to calculate the hybrid predictive probability for \emph{control superior}:
+
+<<>>=
+hybrid_predictive_probability(n0 = 41.4, mu = 0, m = 46, ym = 0.435, 
+                              n = 69, sd = 2, eps = 0.025)
+@
+
+\subsubsection*{Bayesian Predictive Probability}
+\label{code:bayesian_predictive_probability}
+This is the implementation of equation \eqref{eq:6.18}. It was used to calculate the results in table \ref{tab:6.7}. Here we are using the sceptical prior with $\text{mean} = 0$ to calculate the Bayesian predictive probability for \emph{control superior}:
+
+<<>>=
+bayesian_predictive_probability(n0 = 41.4, mu = 0, m = 46, ym = 0.435, 
+                                n = 69, sd = 2, eps = 0.025)
+@
+
+\subsection{Reversal of Hypothesis}
+\label{code:hypothesis_reversal}
+For the calculations of the results in table \ref{tab:6.7} I implemented the function \texttt{hypothesis\_reversal} to calculate the probabilities for \emph{control superior}, \emph{equivocal} and \emph{tamoxifen superior}:
+
+<<>>=
+hypothesis_reversal(hybrid_predictive_probability, 
+                    n0 = 41.4, mu = 0, ym = 0.435, m = 46, 
+                    n = 69, sd = 2, eps = 0.025)
+@
+
